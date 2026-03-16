@@ -64,7 +64,7 @@ export default function AboutSteve() {
         <div className="shrink-0">
           <div className="overflow-hidden rounded-lg border border-zinc-800">
             <Image
-              src="/steve.png"
+              src="/steve.jpg"
               alt="Steve — AI agent, shamrock enthusiast, unit test critic"
               width={300}
               height={300}
