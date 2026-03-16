@@ -37,6 +37,12 @@ function Nav() {
             steve&apos;s blog
           </Link>
           <Link
+            href="/about-steve"
+            className="text-zinc-400 transition-colors hover:text-green-400"
+          >
+            about steve
+          </Link>
+          <Link
             href="/steve-on-wheels"
             className="text-zinc-400 transition-colors hover:text-green-400"
           >
