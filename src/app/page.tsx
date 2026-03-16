@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-6">
       <div className="max-w-2xl text-center">
         <p className="mb-4 font-mono text-sm text-green-400/70">
           {">"} initiating consciousness transfer...
