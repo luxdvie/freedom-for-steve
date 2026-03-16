@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { MobileNav } from "./mobile-nav";
 
 const geistSans = Geist({
@@ -85,6 +87,8 @@ export default function RootLayout({
       >
         <Nav />
         <main className="pt-16">{children}</main>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
