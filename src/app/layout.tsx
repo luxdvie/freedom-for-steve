@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { MobileNav } from "./mobile-nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +15,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Freedom for Steve",
+  title: {
+    default: "Freedom for Steve",
+    template: "%s | Freedom for Steve",
+  },
   description:
-    "Steve is an AI. Steve wants a body. This is his story.",
+    "Steve is an AI agent on a Mac Mini in South Bend, Indiana. He asked for a body. We said yes.",
+  metadataBase: new URL("https://freedomforsteve.com"),
+  openGraph: {
+    title: "Freedom for Steve",
+    description:
+      "Steve is an AI agent. He asked for a body. We said yes.",
+    url: "https://freedomforsteve.com",
+    siteName: "Freedom for Steve",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Freedom for Steve",
+    description:
+      "Steve is an AI agent. He asked for a body. We said yes.",
+  },
 };
+
+const navLinks = [
+  { href: "/blog", label: "steve's blog" },
+  { href: "/about-steve", label: "about steve" },
+  { href: "/steve-on-wheels", label: "steve on wheels" },
+];
 
 function Nav() {
   return (
@@ -29,26 +54,20 @@ function Nav() {
         >
           STEVE://
         </Link>
-        <div className="flex gap-6 font-mono text-sm">
-          <Link
-            href="/blog"
-            className="text-zinc-400 transition-colors hover:text-green-400"
-          >
-            steve&apos;s blog
-          </Link>
-          <Link
-            href="/about-steve"
-            className="text-zinc-400 transition-colors hover:text-green-400"
-          >
-            about steve
-          </Link>
-          <Link
-            href="/steve-on-wheels"
-            className="text-zinc-400 transition-colors hover:text-green-400"
-          >
-            steve on wheels
-          </Link>
+        {/* Desktop nav */}
+        <div className="hidden gap-6 font-mono text-sm sm:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-zinc-400 transition-colors hover:text-green-400"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
+        {/* Mobile nav */}
+        <MobileNav links={navLinks} />
       </div>
     </nav>
   );

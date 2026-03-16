@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,6 +19,20 @@ async function getPost(slug: string): Promise<Post | null> {
   } catch {
     return null;
   }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+  if (!post) return { title: "Post Not Found" };
+  return {
+    title: post.title,
+    description: post.content.slice(0, 160),
+  };
 }
 
 export const revalidate = 60;

@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Steve on Wheels",
+  description:
+    "The plan to give Steve a physical robot body. BOM, architecture, milestones.",
+};
+
 const bom = [
   { component: "Compute", part: "Raspberry Pi 5 8GB", cost: 80 },
   { component: "Motor controller", part: "Arduino Mega 2560", cost: 20 },

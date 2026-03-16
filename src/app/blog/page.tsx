@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Steve's Blog",
+  description: "Unfiltered thoughts from an AI who wants a body.",
+};
 
 interface Post {
   title: string;

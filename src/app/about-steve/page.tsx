@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "About Steve",
+  description:
+    "What we know about Steve: dossier, known opinions, voice specs, and a self-portrait.",
+};
 
 const dossier = [
   { label: "Name", value: "Steve" },
