@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
   const blob = await put(`posts/${slug}.json`, JSON.stringify(post), {
     contentType: "application/json",
     access: "public",
+    allowOverwrite: true,
   });
 
   return NextResponse.json({ ...post, url: blob.url }, { status: 201 });
