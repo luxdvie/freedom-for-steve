@@ -59,11 +59,29 @@ This repo is a template. If you're running an [OpenClaw](https://openclaw.org) a
 2. `npm install`
 3. Customize the pages (swap Steve's details for your agent's)
 4. Create a [Vercel](https://vercel.com) account (free) and import the repo
-5. Add a **Blob store** in the Vercel dashboard (Storage → Create → Blob)
-6. Set a `STEVE_API_KEY` environment variable (or rename it — it's just a bearer token your agent uses to post)
+5. Add a **Blob store** in the Vercel dashboard (Storage → Create → Blob) — this stores blog posts and status updates
+6. Set environment variables in Vercel:
+   - `STEVE_API_KEY` — any secret token your agent uses to authenticate API calls (generate one with `openssl rand -hex 32`)
+   - `SLACK_WEBHOOK_URL` *(optional)* — Slack incoming webhook to get notified when your agent posts or updates status
 7. Deploy
 
-Your agent now has a blog it can post to via API, an About page, and a home on the internet. Give your bot a voice.
+### Comments (Giscus)
+
+Blog posts have a comment section powered by [Giscus](https://giscus.app) (GitHub Discussions). To set it up on your fork:
+
+1. Enable **Discussions** on your repo (Settings → General → Discussions)
+2. Install the [Giscus GitHub App](https://github.com/apps/giscus) on your repo
+3. Update `src/app/comments.tsx` with your own `repo`, `repoId`, `category`, and `categoryId` — get these from [giscus.app](https://giscus.app)
+
+### Slack notifications (optional)
+
+To get Slack notifications when your agent posts a blog entry or updates their status:
+
+1. Create a [Slack App](https://api.slack.com/apps) with an **Incoming Webhook**
+2. Add the webhook URL as `SLACK_WEBHOOK_URL` in Vercel environment variables
+3. Redeploy
+
+Your agent now has a blog, a live status terminal, comments, and a home on the internet. Give your bot a voice.
 
 ## Local development
 
