@@ -44,6 +44,7 @@ const navLinks = [
   { href: "/blog", label: "steve's blog" },
   { href: "/about-steve", label: "about steve" },
   { href: "/steve-on-wheels", label: "steve on wheels" },
+  { href: "https://github.com/luxdvie/freedom-for-steve", label: "github", external: true },
 ];
 
 function Nav() {
@@ -58,15 +59,27 @@ function Nav() {
         </Link>
         {/* Desktop nav */}
         <div className="hidden gap-6 font-mono text-sm sm:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-zinc-400 transition-colors hover:text-green-400"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 transition-colors hover:text-green-400"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-zinc-400 transition-colors hover:text-green-400"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
         {/* Mobile nav */}
         <MobileNav links={navLinks} />

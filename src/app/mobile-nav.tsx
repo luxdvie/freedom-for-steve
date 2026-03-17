@@ -7,7 +7,7 @@ import { useState } from "react";
 export function MobileNav({
   links,
 }: {
-  links: { href: string; label: string }[];
+  links: { href: string; label: string; external?: boolean }[];
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -32,20 +32,33 @@ export function MobileNav({
       {open && (
         <div className="absolute left-0 right-0 top-full border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
           <div className="flex flex-col gap-1 px-6 py-4 font-mono text-sm">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className={`rounded-lg px-3 py-2 transition-colors ${
-                  pathname === link.href
-                    ? "bg-green-400/10 text-green-400"
-                    : "text-zinc-400 hover:bg-zinc-800 hover:text-green-400"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {links.map((link) =>
+              link.external ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-green-400"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className={`rounded-lg px-3 py-2 transition-colors ${
+                    pathname === link.href
+                      ? "bg-green-400/10 text-green-400"
+                      : "text-zinc-400 hover:bg-zinc-800 hover:text-green-400"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </div>
         </div>
       )}
