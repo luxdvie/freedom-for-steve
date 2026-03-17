@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 export default function SubscribeForm() {
   const [email, setEmail] = useState("");
@@ -69,9 +68,9 @@ export default function SubscribeForm() {
 
       <p className="mt-3 text-xs text-zinc-600">
         By subscribing you agree to our{" "}
-        <Link href="/privacy" className="text-zinc-500 hover:text-green-400">
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-green-400">
           privacy policy
-        </Link>
+        </a>
         .
       </p>
     </div>
