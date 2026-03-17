@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
   const token = request.nextUrl.searchParams.get("token");
 
+  // Block Slack's link unfurler from triggering moderation
+  const userAgent = request.headers.get("user-agent") || "";
+  if (userAgent.includes("Slackbot")) {
+    return new NextResponse("OK", { status: 200 });
+  }
+
   if (!id || !slug || !action || !token) {
     return new NextResponse("Missing parameters", { status: 400 });
   }
@@ -67,9 +73,6 @@ export async function GET(request: NextRequest) {
     );
 
     const verb = action === "approve" ? "approved" : "rejected";
-    await notifySlack(
-      `✅ Comment from *${comment.githubUsername}* on "${slug}" was *${verb}*`
-    );
 
     return new NextResponse(
       `<html>
