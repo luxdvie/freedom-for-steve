@@ -68,7 +68,10 @@ export function replyNotificationEmail(
   return {
     subject,
     html,
-    headers: { "List-Unsubscribe": `<${unsubscribeUrl}>` },
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   };
 }
 
@@ -92,7 +95,10 @@ export function newPostEmail(
   return {
     subject,
     html,
-    headers: { "List-Unsubscribe": `<${unsubscribeUrl}>` },
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   };
 }
 
@@ -115,14 +121,11 @@ export function confirmSubscriptionEmail(
   return {
     subject,
     html,
-    headers: { "List-Unsubscribe": `<${unsubscribeUrl}>` },
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   };
 }
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+import { escapeHtml } from "@/lib/html";

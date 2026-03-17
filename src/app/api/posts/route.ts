@@ -6,7 +6,7 @@ import { sendEmail, newPostEmail } from "@/lib/email";
 import { getAllSubscribers, generateSubscriberToken } from "@/lib/subscribers";
 import { getBaseUrl } from "@/lib/url";
 
-export const maxDuration = 10;
+export const maxDuration = 30;
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

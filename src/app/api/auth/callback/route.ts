@@ -62,14 +62,14 @@ export async function GET(request: NextRequest) {
         await upsertGitHubSubscriber({
           ...existing,
           githubAvatar: user.avatar_url,
-          encryptedEmail: encryptEmail(primaryEmail.email),
+          encryptedEmail: encryptEmail(primaryEmail.email.toLowerCase().trim()),
         });
       } else {
         await upsertGitHubSubscriber({
           id: crypto.randomUUID(),
           githubLogin: user.login,
           githubAvatar: user.avatar_url,
-          encryptedEmail: encryptEmail(primaryEmail.email),
+          encryptedEmail: encryptEmail(primaryEmail.email.toLowerCase().trim()),
           notifyReplies: true,
           notifyPosts: false,
           createdAt: new Date().toISOString(),
