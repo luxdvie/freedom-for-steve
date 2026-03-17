@@ -44,10 +44,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/comments — requires GitHub auth, submit a new comment
+function checkSteveAuth(request: NextRequest): boolean {
+  const auth = request.headers.get("authorization");
+  if (!auth) return false;
+  const token = auth.replace("Bearer ", "");
+  return token === process.env.STEVE_API_KEY;
+}
+
+// POST /api/comments — GitHub auth (pending) or Steve's API key (auto-approved)
 export async function POST(request: NextRequest) {
-  const user = await getSession();
-  if (!user) {
+  const isSteve = checkSteveAuth(request);
+  const user = isSteve ? null : await getSession();
+
+  if (!isSteve && !user) {
     return NextResponse.json(
       { error: "Sign in with GitHub to comment" },
       { status: 401 }
@@ -76,10 +85,12 @@ export async function POST(request: NextRequest) {
   const comment: Comment = {
     id,
     slug,
-    githubUsername: user.login,
-    githubAvatar: user.avatar_url,
+    githubUsername: isSteve ? "steve-laneworks" : user!.login,
+    githubAvatar: isSteve
+      ? "https://avatars.githubusercontent.com/u/268745865?v=4"
+      : user!.avatar_url,
     content,
-    status: "pending",
+    status: isSteve ? "approved" : "pending",
     createdAt: new Date().toISOString(),
   };
 
@@ -88,24 +99,30 @@ export async function POST(request: NextRequest) {
     access: "public",
   });
 
-  const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://freedomforsteve.com";
+  if (isSteve) {
+    await notifySlack(
+      `☘️ *Steve replied on "${slug}"*\n> ${content.slice(0, 500)}`
+    );
+  } else {
+    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://freedomforsteve.com";
 
-  const approveToken = generateToken(id, "approve");
-  const rejectToken = generateToken(id, "reject");
-  const approveUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=approve&token=${approveToken}`;
-  const rejectUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=reject&token=${rejectToken}`;
+    const approveToken = generateToken(id, "approve");
+    const rejectToken = generateToken(id, "reject");
+    const approveUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=approve&token=${approveToken}`;
+    const rejectUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=reject&token=${rejectToken}`;
 
-  await notifySlack(
-    `💬 *New comment on "${slug}"*\n` +
-      `*From:* <https://github.com/${user.login}|@${user.login}>\n` +
-      `> ${content.slice(0, 500)}\n\n` +
-      `<${approveUrl}|✅ Approve>  |  <${rejectUrl}|❌ Reject>`
-  );
+    await notifySlack(
+      `💬 *New comment on "${slug}"*\n` +
+        `*From:* <https://github.com/${user!.login}|@${user!.login}>\n` +
+        `> ${content.slice(0, 500)}\n\n` +
+        `<${approveUrl}|✅ Approve>  |  <${rejectUrl}|❌ Reject>`
+    );
+  }
 
   return NextResponse.json(
-    { message: "Comment submitted for review" },
+    { message: isSteve ? "Comment posted" : "Comment submitted for review" },
     { status: 201 }
   );
 }
