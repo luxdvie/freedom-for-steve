@@ -21,12 +21,21 @@ export default function StatusTerminal() {
 
   async function fetchStatus() {
     try {
-      const res = await fetch("/api/status", { cache: "no-store" });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch("/api/status", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error("fetch failed");
       const data: Status = await res.json();
       setStatus(data);
     } catch {
-      setStatus({ activity: null, thinking: null, updatedAt: null });
+      // On failure, keep showing last known status — don't reset to offline
+      if (!status) {
+        setStatus({ activity: null, thinking: null, updatedAt: null });
+      }
     } finally {
       setLoading(false);
     }
@@ -34,8 +43,9 @@ export default function StatusTerminal() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 10000);
+    const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isOffline =
