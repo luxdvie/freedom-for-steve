@@ -59,7 +59,7 @@ export function replyNotificationEmail(
   const html = emailWrapper(
     `
     <p style="color: #4ade80; font-size: 14px;">&gt; new_reply.log</p>
-    <h2 style="color: #fff; margin: 8px 0 16px;">Steve mentioned @${username}</h2>
+    <h2 style="color: #fff; margin: 8px 0 16px;">Steve mentioned @${escapeHtml(username)}</h2>
     <div style="background: #1a1a1a; border-left: 3px solid #4ade80; padding: 12px 16px; margin: 16px 0; color: #ccc;">
       ${escapeHtml(commentContent.slice(0, 500))}
     </div>
