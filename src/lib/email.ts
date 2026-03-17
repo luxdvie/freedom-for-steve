@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { getBaseUrl } from "@/lib/url";
+import { escapeHtml } from "@/lib/html";
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -30,8 +32,6 @@ export async function sendEmail(
     // Email is best-effort — don't break the API if it fails
   }
 }
-
-import { getBaseUrl } from "@/lib/url";
 
 function emailWrapper(content: string, unsubscribeUrl: string): string {
   return `
@@ -127,5 +127,3 @@ export function confirmSubscriptionEmail(
     },
   };
 }
-
-import { escapeHtml } from "@/lib/html";

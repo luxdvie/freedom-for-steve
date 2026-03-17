@@ -1,41 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { encryptEmail, decryptEmail } from "@/lib/crypto";
+import { encryptEmail } from "@/lib/crypto";
 import { sendEmail, confirmSubscriptionEmail } from "@/lib/email";
 import {
   createAnonSubscriber,
   getAllSubscribers,
   generateSubscriberToken,
+  hashEmail,
 } from "@/lib/subscribers";
-
 import { getBaseUrl } from "@/lib/url";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Simple in-memory rate limiter: max 3 requests per IP per 10 minutes
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW = 10 * 60 * 1000;
-const RATE_LIMIT_MAX = 3;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = (rateLimitMap.get(ip) || []).filter(
-    (t) => now - t < RATE_LIMIT_WINDOW
-  );
-  if (timestamps.length >= RATE_LIMIT_MAX) return true;
-  timestamps.push(now);
-  rateLimitMap.set(ip, timestamps);
-  return false;
-}
+// Note: No server-side rate limiting — Vercel serverless functions are stateless
+// so in-memory rate limiters are ineffective. Double opt-in is the primary abuse
+// mitigation (unconfirmed subscribers can't trigger any email sends beyond the
+// initial confirmation). Consider Vercel KV or Upstash if abuse becomes an issue.
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many requests. Try again later." },
-      { status: 429 }
-    );
-  }
-
   try {
     const { email } = await request.json();
 
@@ -47,21 +28,16 @@ export async function POST(request: NextRequest) {
     }
 
     const normalized = email.toLowerCase().trim();
+    const hash = hashEmail(normalized);
 
-    // Dedup check: see if this email is already subscribed
+    // O(1)-ish dedup: compare hashes instead of decrypting every email
     const { anon } = await getAllSubscribers();
-    for (const sub of anon) {
-      try {
-        const existing = decryptEmail(sub.encryptedEmail);
-        if (existing === normalized) {
-          // Already subscribed — silently succeed to avoid leaking info
-          return NextResponse.json({
-            message: "Check your email to confirm your subscription",
-          });
-        }
-      } catch {
-        // skip corrupted records
-      }
+    const alreadyExists = anon.some((sub) => sub.emailHash === hash);
+    if (alreadyExists) {
+      // Silently succeed to avoid leaking whether an email is subscribed
+      return NextResponse.json({
+        message: "Check your email to confirm your subscription",
+      });
     }
 
     const id = crypto.randomUUID();
@@ -70,6 +46,7 @@ export async function POST(request: NextRequest) {
     await createAnonSubscriber({
       id,
       encryptedEmail,
+      emailHash: hash,
       confirmed: false,
       createdAt: new Date().toISOString(),
     });

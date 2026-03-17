@@ -14,6 +14,7 @@ export interface GitHubSubscriber {
 export interface AnonSubscriber {
   id: string;
   encryptedEmail: string;
+  emailHash: string; // HMAC of normalized email for O(1) dedup
   confirmed: boolean;
   createdAt: string;
 }
@@ -22,6 +23,13 @@ function getSecret(): string {
   const secret = process.env.COMMENT_SECRET;
   if (!secret) throw new Error("COMMENT_SECRET not set");
   return secret;
+}
+
+// HMAC hash of email for dedup without decryption
+export function hashEmail(email: string): string {
+  return createHmac("sha256", getSecret())
+    .update(`email:${email}`)
+    .digest("hex");
 }
 
 // HMAC helpers for unsubscribe/confirm tokens
@@ -44,6 +52,10 @@ export function verifySubscriberToken(
   const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 }
+
+// Vercel Blob only supports access: "public" — blob URLs are long random strings
+// and list() requires the BLOB_READ_WRITE_TOKEN, so enumeration risk is low.
+// Emails are encrypted at rest as the primary mitigation.
 
 // GitHub subscriber CRUD
 export async function getGitHubSubscriber(
@@ -120,6 +132,8 @@ export async function deleteSubscriber(
   }
 }
 
+// TODO: Vercel Blob list() returns max 1000 blobs per call. Add cursor-based
+// pagination if subscriber count approaches that limit.
 export async function getAllSubscribers(): Promise<{
   github: GitHubSubscriber[];
   anon: AnonSubscriber[];
