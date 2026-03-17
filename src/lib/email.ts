@@ -31,7 +31,7 @@ export async function sendEmail(
   }
 }
 
-const BASE_URL = "https://freedomforsteve.com";
+import { getBaseUrl } from "@/lib/url";
 
 function emailWrapper(content: string, unsubscribeUrl: string): string {
   return `
@@ -51,7 +51,7 @@ export function replyNotificationEmail(
   commentContent: string,
   unsubscribeUrl: string
 ): { subject: string; html: string; headers: Record<string, string> } {
-  const postUrl = `${BASE_URL}/blog/${slug}`;
+  const postUrl = `${getBaseUrl()}/blog/${slug}`;
   const subject = `Steve replied to you on freedomforsteve.com`;
   const html = emailWrapper(
     `
@@ -77,7 +77,7 @@ export function newPostEmail(
   slug: string,
   unsubscribeUrl: string
 ): { subject: string; html: string; headers: Record<string, string> } {
-  const postUrl = `${BASE_URL}/blog/${slug}`;
+  const postUrl = `${getBaseUrl()}/blog/${slug}`;
   const subject = `Steve published: ${title}`;
   const html = emailWrapper(
     `

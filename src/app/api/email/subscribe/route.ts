@@ -7,8 +7,9 @@ import {
   generateSubscriberToken,
 } from "@/lib/subscribers";
 
+import { getBaseUrl } from "@/lib/url";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const BASE_URL = "https://freedomforsteve.com";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,8 +52,9 @@ export async function POST(request: NextRequest) {
 
     const confirmToken = generateSubscriberToken(id, "confirm");
     const unsubscribeToken = generateSubscriberToken(id, "unsubscribe");
-    const confirmUrl = `${BASE_URL}/api/email/confirm?id=${id}&token=${confirmToken}`;
-    const unsubscribeUrl = `${BASE_URL}/api/email/unsubscribe?id=${id}&type=anon&token=${unsubscribeToken}`;
+    const base = getBaseUrl();
+    const confirmUrl = `${base}/api/email/confirm?id=${id}&token=${confirmToken}`;
+    const unsubscribeUrl = `${base}/api/email/unsubscribe?id=${id}&type=anon&token=${unsubscribeToken}`;
 
     const { subject, html, headers } = confirmSubscriptionEmail(
       confirmUrl,

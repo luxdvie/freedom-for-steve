@@ -9,6 +9,7 @@ import {
   getGitHubSubscriber,
   generateSubscriberToken,
 } from "@/lib/subscribers";
+import { getBaseUrl } from "@/lib/url";
 
 export const maxDuration = 10;
 
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Send reply notifications for @mentioned users
-    const mentions = content.match(/(?:^|\s)@([a-zA-Z0-9-]+)/g);
+    const mentions = content.match(/(?:^|\s)@([a-zA-Z0-9-]+)/gm);
     if (mentions) {
       const usernames = Array.from(
         new Set<string>(mentions.map((m: string) => m.trim().slice(1)))
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
               sub.githubLogin,
               "unsubscribe"
             );
-            const unsubUrl = `https://freedomforsteve.com/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${unsubToken}`;
+            const unsubUrl = `${getBaseUrl()}/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${unsubToken}`;
             const { subject, html, headers } = replyNotificationEmail(
               username,
               slug,
@@ -140,10 +141,7 @@ export async function POST(request: NextRequest) {
       }
     }
   } else {
-    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://freedomforsteve.com";
-
+    const baseUrl = getBaseUrl();
     const approveToken = generateToken(id, "approve");
     const rejectToken = generateToken(id, "reject");
     const approveUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=approve&token=${approveToken}`;

@@ -4,6 +4,7 @@ import { notifySlack } from "@/lib/notify";
 import { decryptEmail } from "@/lib/crypto";
 import { sendEmail, newPostEmail } from "@/lib/email";
 import { getAllSubscribers, generateSubscriberToken } from "@/lib/subscribers";
+import { getBaseUrl } from "@/lib/url";
 
 export const maxDuration = 10;
 
@@ -68,8 +69,10 @@ export async function POST(request: NextRequest) {
     allowOverwrite: true,
   });
 
+  const baseUrl = getBaseUrl();
+
   await notifySlack(
-    `☘️ *Steve published a new post:* <https://freedomforsteve.com/blog/${slug}|${title}>`
+    `☘️ *Steve published a new post:* <${baseUrl}/blog/${slug}|${title}>`
   );
 
   // Fan-out new post emails to subscribers
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
         const token = generateSubscriberToken(sub.githubLogin, "unsubscribe");
         recipients.push({
           email,
-          unsubUrl: `https://freedomforsteve.com/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${token}`,
+          unsubUrl: `${baseUrl}/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${token}`,
         });
       } catch {
         // skip
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
         const token = generateSubscriberToken(sub.id, "unsubscribe");
         recipients.push({
           email,
-          unsubUrl: `https://freedomforsteve.com/api/email/unsubscribe?id=${sub.id}&type=anon&token=${token}`,
+          unsubUrl: `${baseUrl}/api/email/unsubscribe?id=${sub.id}&type=anon&token=${token}`,
         });
       } catch {
         // skip

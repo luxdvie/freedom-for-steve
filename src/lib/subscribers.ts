@@ -1,5 +1,5 @@
 import { del, list, put } from "@vercel/blob";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 export interface GitHubSubscriber {
   id: string;
@@ -40,7 +40,9 @@ export function verifySubscriberToken(
   token: string
 ): boolean {
   const expected = generateSubscriberToken(subscriberId, action);
-  return token === expected;
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 // GitHub subscriber CRUD

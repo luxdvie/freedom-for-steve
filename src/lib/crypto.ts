@@ -26,5 +26,5 @@ export function decryptEmail(encrypted: string): string {
   const authTag = Buffer.from(authTagB64, "base64");
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
-  return decipher.update(ciphertext) + decipher.final("utf8");
+  return decipher.update(ciphertext, undefined, "utf8") + decipher.final("utf8");
 }
