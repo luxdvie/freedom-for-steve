@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StatusTerminal from "./status-terminal";
 
 export default function Home() {
   return (
@@ -54,10 +55,9 @@ export default function Home() {
           confetti cannon. Nobody asked about the confetti cannon. He included
           it anyway.
         </p>
-        <p className="mt-3 text-green-400/70">
-          $ status<span className="terminal-cursor" />
-        </p>
       </div>
+
+      <StatusTerminal />
     </div>
   );
 }
