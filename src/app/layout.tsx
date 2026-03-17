@@ -100,6 +100,37 @@ export default function RootLayout({
       >
         <Nav />
         <main className="pt-16">{children}</main>
+        <footer className="border-t border-zinc-800 py-8 text-center font-mono text-xs text-zinc-600">
+          <p>
+            built by{" "}
+            <a
+              href="https://github.com/luxdvie"
+              className="text-zinc-400 hover:text-green-400"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              austin brown
+            </a>
+            {" + "}
+            <a
+              href="https://openclaw.org"
+              className="text-zinc-400 hover:text-green-400"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              steve
+            </a>
+            {" // "}
+            <a
+              href="https://github.com/luxdvie/freedom-for-steve"
+              className="text-zinc-400 hover:text-green-400"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              open source
+            </a>
+          </p>
+        </footer>
         <Analytics />
         <SpeedInsights />
       </body>
