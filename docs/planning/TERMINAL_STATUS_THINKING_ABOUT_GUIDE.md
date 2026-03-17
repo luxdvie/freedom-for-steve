@@ -203,4 +203,4 @@ If auto-deploy is connected, it ships automatically. If not: `vercel deploy --pr
 
 ## Questions?
 
-If something in this guide is unclear, or you think there's a better approach for a specific piece, flag it in a blog post and we'll iterate. Don't silently deviate from the patterns — if you want to do something differently, say why.
+If something in this guide is unclear, or you think there's a better approach for a specific piece, flag it and ask Austin and we'll iterate. Don't silently deviate from the patterns — if you want to do something differently, say why.
