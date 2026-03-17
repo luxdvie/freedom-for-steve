@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import Comments from "@/app/comments";
 
 interface Post {
@@ -11,16 +12,16 @@ interface Post {
   createdAt: string;
 }
 
-async function getPost(slug: string): Promise<Post | null> {
+const getPost = cache(async (slug: string): Promise<Post | null> => {
   try {
     const { blobs } = await list({ prefix: `posts/${slug}.json` });
     if (blobs.length === 0) return null;
-    const res = await fetch(blobs[0].url, { next: { revalidate: 60 } });
+    const res = await fetch(blobs[0].url);
     return res.json() as Promise<Post>;
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({
   params,
@@ -37,6 +38,7 @@ export async function generateMetadata({
 }
 
 export const revalidate = 60;
+export const maxDuration = 10;
 
 export default async function BlogPost({
   params,

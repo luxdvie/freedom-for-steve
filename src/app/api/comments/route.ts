@@ -4,6 +4,8 @@ import { notifySlack } from "@/lib/notify";
 import { Comment, generateToken } from "@/lib/comments";
 import { getSession } from "@/lib/auth";
 
+export const maxDuration = 10;
+
 // GET /api/comments?slug=xxx — public, returns approved comments only
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get("slug");

@@ -2,6 +2,8 @@ import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { notifySlack } from "@/lib/notify";
 
+export const maxDuration = 10;
+
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }

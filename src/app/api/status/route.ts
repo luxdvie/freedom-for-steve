@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Status } from "@/lib/types";
 import { notifySlack } from "@/lib/notify";
 
+export const maxDuration = 10;
+
 const DEFAULT_STATUS: Status = {
   activity: null,
   thinking: null,
