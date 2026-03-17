@@ -32,6 +32,25 @@ export async function GET(request: NextRequest) {
     const res = await fetch(blobs[0].url);
     const comment: Comment = await res.json();
 
+    // Prevent replay — only pending comments can be moderated
+    if (comment.status !== "pending") {
+      return new NextResponse(
+        `<html>
+          <body style="background:#0a0a0a;color:#ededed;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+            <div style="text-align:center">
+              <h1 style="color:#facc15">Already ${comment.status}</h1>
+              <p>This comment was already moderated.</p>
+              <a href="https://freedomforsteve.com/blog/${slug}" style="color:#4ade80">View post</a>
+            </div>
+          </body>
+        </html>`,
+        {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }
+      );
+    }
+
     const updated: Comment = {
       ...comment,
       status: action === "approve" ? "approved" : "rejected",
