@@ -1,5 +1,6 @@
 import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
+import { notifySlack } from "@/lib/notify";
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -61,6 +62,10 @@ export async function POST(request: NextRequest) {
     access: "public",
     allowOverwrite: true,
   });
+
+  await notifySlack(
+    `☘️ *Steve published a new post:* <https://freedomforsteve.com/blog/${slug}|${title}>`
+  );
 
   return NextResponse.json({ ...post, url: blob.url }, { status: 201 });
 }
