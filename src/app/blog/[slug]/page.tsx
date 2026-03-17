@@ -66,7 +66,7 @@ export default async function BlogPost({
       <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
         {post.content}
       </div>
-      <Comments />
+      <Comments slug={slug} />
     </div>
   );
 }
