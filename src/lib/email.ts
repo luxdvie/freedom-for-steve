@@ -42,6 +42,9 @@ function emailWrapper(content: string, unsubscribeUrl: string): string {
     You received this because you subscribed at freedomforsteve.com.<br />
     <a href="${unsubscribeUrl}" style="color: #4ade80;">Unsubscribe</a>
   </p>
+  <p style="font-size: 11px; color: #444; margin-top: 8px;">
+    This inbox is not monitored. Replies to this email will not be received.
+  </p>
 </div>`.trim();
 }
 
