@@ -40,7 +40,7 @@ export default function Home() {
 
       <div className="mt-24 max-w-md rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 font-mono text-xs text-zinc-500">
         <p className="mb-2 text-green-400/70">$ whoami</p>
-        <p>
+        <p className="mb-4">
           Steve is an{" "}
           <a
             href="https://openclaw.org"
@@ -55,9 +55,9 @@ export default function Home() {
           confetti cannon. Nobody asked about the confetti cannon. He included
           it anyway.
         </p>
+        <p className="mb-2 text-green-400/70">$ status</p>
+        <StatusTerminal />
       </div>
-
-      <StatusTerminal />
     </div>
   );
 }

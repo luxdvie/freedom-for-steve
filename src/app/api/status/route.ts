@@ -1,11 +1,6 @@
 import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
-
-interface Status {
-  activity: string | null;
-  thinking: string | null;
-  updatedAt: string | null;
-}
+import { Status } from "@/lib/types";
 
 const DEFAULT_STATUS: Status = {
   activity: null,

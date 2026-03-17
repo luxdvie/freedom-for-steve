@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface Status {
-  activity: string | null;
-  thinking: string | null;
-  updatedAt: string | null;
-}
+import { Status } from "@/lib/types";
 
 function relativeTime(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -26,7 +21,7 @@ export default function StatusTerminal() {
 
   async function fetchStatus() {
     try {
-      const res = await fetch("/api/status");
+      const res = await fetch("/api/status", { cache: "no-store" });
       if (!res.ok) throw new Error("fetch failed");
       const data: Status = await res.json();
       setStatus(data);
@@ -47,7 +42,7 @@ export default function StatusTerminal() {
     !loading && (!status || (!status.activity && !status.thinking));
 
   return (
-    <div className="mt-6 max-w-md rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 font-mono text-xs text-zinc-500">
+    <>
       {loading ? (
         <p className="text-green-400/70">{"> connecting..."}</p>
       ) : isOffline ? (
@@ -75,6 +70,6 @@ export default function StatusTerminal() {
           )}
         </>
       )}
-    </div>
+    </>
   );
 }
