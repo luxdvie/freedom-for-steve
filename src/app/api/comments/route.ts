@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
       );
 
     return NextResponse.json(approved);
-  } catch {
-    return NextResponse.json([], { status: 200 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }
 
