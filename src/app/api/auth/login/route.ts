@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${request.nextUrl.origin}/api/auth/callback`,
-    scope: "read:user",
+    scope: "read:user user:email",
     state: returnTo,
   });
 

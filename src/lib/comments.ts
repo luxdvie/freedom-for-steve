@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 export interface Comment {
   id: string;
@@ -24,5 +24,7 @@ export function verifyToken(
   token: string
 ): boolean {
   const expected = generateToken(commentId, action);
-  return token === expected;
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }

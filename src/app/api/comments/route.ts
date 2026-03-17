@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { notifySlack } from "@/lib/notify";
 import { Comment, generateToken } from "@/lib/comments";
 import { getSession } from "@/lib/auth";
+import { decryptEmail } from "@/lib/crypto";
+import { sendEmail, replyNotificationEmail } from "@/lib/email";
+import {
+  getGitHubSubscriber,
+  generateSubscriberToken,
+} from "@/lib/subscribers";
+import { getBaseUrl } from "@/lib/url";
 
 export const maxDuration = 10;
 
@@ -103,11 +110,38 @@ export async function POST(request: NextRequest) {
     await notifySlack(
       `☘️ *Steve replied on "${slug}"*\n> ${content.slice(0, 500)}`
     );
-  } else {
-    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://freedomforsteve.com";
 
+    // Send reply notifications for @mentioned users
+    const mentions = content.match(/(?:^|\s)@([a-zA-Z0-9-]+)/gm);
+    if (mentions) {
+      const usernames = Array.from(
+        new Set<string>(mentions.map((m: string) => m.trim().slice(1)))
+      );
+      for (const username of usernames) {
+        try {
+          const sub = await getGitHubSubscriber(username);
+          if (sub?.notifyReplies) {
+            const email = decryptEmail(sub.encryptedEmail);
+            const unsubToken = generateSubscriberToken(
+              sub.githubLogin,
+              "unsubscribe"
+            );
+            const unsubUrl = `${getBaseUrl()}/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${unsubToken}`;
+            const { subject, html, headers } = replyNotificationEmail(
+              username,
+              slug,
+              content,
+              unsubUrl
+            );
+            await sendEmail(email, subject, html, headers);
+          }
+        } catch {
+          // best-effort
+        }
+      }
+    }
+  } else {
+    const baseUrl = getBaseUrl();
     const approveToken = generateToken(id, "approve");
     const rejectToken = generateToken(id, "reject");
     const approveUrl = `${baseUrl}/api/comments/moderate?id=${id}&slug=${slug}&action=approve&token=${approveToken}`;

@@ -130,6 +130,15 @@ export default function RootLayout({
               open source
             </a>
           </p>
+          <p className="mt-2">
+            <Link href="/privacy" className="text-zinc-600 hover:text-green-400">
+              privacy
+            </Link>
+            {" · "}
+            <Link href="/disclaimer" className="text-zinc-600 hover:text-green-400">
+              disclaimer
+            </Link>
+          </p>
         </footer>
         <Analytics />
         <SpeedInsights />

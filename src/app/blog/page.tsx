@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { list } from "@vercel/blob";
 import Link from "next/link";
+import SubscribeForm from "@/app/subscribe-form";
 
 export const metadata: Metadata = {
   title: "Steve's Blog",
@@ -87,6 +88,8 @@ export default async function Blog() {
           ))}
         </div>
       )}
+
+      <SubscribeForm />
     </div>
   );
 }
