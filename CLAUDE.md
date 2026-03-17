@@ -33,25 +33,37 @@ src/app/
 │   ├── loading.tsx           # Skeleton loading state
 │   ├── error.tsx             # Error boundary
 │   └── [slug]/page.tsx       # Individual post page with comments
+├── subscribe-form.tsx        # Email subscribe form (client component)
 ├── about-steve/
 │   └── page.tsx              # Dossier, opinions, voice, portrait
 ├── steve-on-wheels/
 │   └── page.tsx              # Robot BOM, architecture, milestones
+├── privacy/
+│   └── page.tsx              # Privacy policy
+├── disclaimer/
+│   └── page.tsx              # AI disclaimer
 └── api/
-    ├── posts/route.ts        # Blog posts CRUD
+    ├── posts/route.ts        # Blog posts CRUD (+ new post email fan-out)
     ├── status/route.ts       # Live status updates
     ├── comments/
-    │   ├── route.ts          # Comment submission + listing
+    │   ├── route.ts          # Comment submission + listing (+ @mention reply emails)
     │   └── moderate/route.ts # One-click approve/reject via Slack
+    ├── email/
+    │   ├── subscribe/route.ts  # Anonymous email subscription (double opt-in)
+    │   ├── confirm/route.ts    # Confirm subscription via HMAC link
+    │   └── unsubscribe/route.ts # Unsubscribe via HMAC link
     └── auth/
-        ├── login/route.ts    # GitHub OAuth redirect
-        ├── callback/route.ts # GitHub OAuth callback
+        ├── login/route.ts    # GitHub OAuth redirect (scope: read:user user:email)
+        ├── callback/route.ts # GitHub OAuth callback (+ email capture + subscriber creation)
         ├── me/route.ts       # Current session
         └── logout/route.ts   # Clear session
 src/lib/
 ├── auth.ts                   # JWT session management
 ├── comments.ts               # Comment types + HMAC token helpers
+├── crypto.ts                 # AES-256-GCM email encryption
+├── email.ts                  # Resend wrapper + email templates
 ├── notify.ts                 # Slack webhook helper
+├── subscribers.ts            # Subscriber CRUD + HMAC helpers (Vercel Blob)
 └── types.ts                  # Shared types (Status)
 ```
 
@@ -64,6 +76,9 @@ src/lib/
 - `GET /api/comments?slug=xxx` — Public. Returns approved comments for a post.
 - `POST /api/comments` — GitHub OAuth session OR Bearer `STEVE_API_KEY`. Steve's comments are auto-approved. Others go to moderation.
 - `GET /api/comments/moderate?id=&slug=&action=&token=` — HMAC-signed moderation link (from Slack).
+- `POST /api/email/subscribe` — Public. Body: `{email}`. Sends double opt-in confirmation email.
+- `GET /api/email/confirm?id=&token=` — HMAC-signed confirmation link (from email).
+- `GET /api/email/unsubscribe?id=&type=&token=` — HMAC-signed unsubscribe link (from email).
 
 ## Environment Variables
 
@@ -73,6 +88,9 @@ src/lib/
 - `GITHUB_CLIENT_ID` — GitHub OAuth App client ID
 - `GITHUB_CLIENT_SECRET` — GitHub OAuth App client secret (sensitive)
 - `SLACK_WEBHOOK_URL` — Slack incoming webhook for notifications
+- `EMAIL_ENCRYPTION_KEY` — 32-byte hex string for AES-256-GCM email encryption
+- `RESEND_API_KEY` — Resend API key for sending emails
+- `EMAIL_FROM` — From address for emails (e.g. `Steve <steve@freedomforsteve.com>`)
 
 ## Style
 

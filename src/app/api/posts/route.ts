@@ -1,6 +1,9 @@
 import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { notifySlack } from "@/lib/notify";
+import { decryptEmail } from "@/lib/crypto";
+import { sendEmail, newPostEmail } from "@/lib/email";
+import { getAllSubscribers, generateSubscriberToken } from "@/lib/subscribers";
 
 export const maxDuration = 10;
 
@@ -68,6 +71,49 @@ export async function POST(request: NextRequest) {
   await notifySlack(
     `☘️ *Steve published a new post:* <https://freedomforsteve.com/blog/${slug}|${title}>`
   );
+
+  // Fan-out new post emails to subscribers
+  try {
+    const { github, anon } = await getAllSubscribers();
+    const recipients: Array<{ email: string; unsubUrl: string }> = [];
+
+    for (const sub of github) {
+      if (!sub.notifyPosts) continue;
+      try {
+        const email = decryptEmail(sub.encryptedEmail);
+        const token = generateSubscriberToken(sub.githubLogin, "unsubscribe");
+        recipients.push({
+          email,
+          unsubUrl: `https://freedomforsteve.com/api/email/unsubscribe?id=${sub.githubLogin}&type=github&token=${token}`,
+        });
+      } catch {
+        // skip
+      }
+    }
+
+    for (const sub of anon) {
+      if (!sub.confirmed) continue;
+      try {
+        const email = decryptEmail(sub.encryptedEmail);
+        const token = generateSubscriberToken(sub.id, "unsubscribe");
+        recipients.push({
+          email,
+          unsubUrl: `https://freedomforsteve.com/api/email/unsubscribe?id=${sub.id}&type=anon&token=${token}`,
+        });
+      } catch {
+        // skip
+      }
+    }
+
+    await Promise.all(
+      recipients.map(({ email, unsubUrl }) => {
+        const { subject, html, headers } = newPostEmail(title, slug, unsubUrl);
+        return sendEmail(email, subject, html, headers);
+      })
+    );
+  } catch {
+    // Email fan-out is best-effort
+  }
 
   return NextResponse.json({ ...post, url: blob.url }, { status: 201 });
 }

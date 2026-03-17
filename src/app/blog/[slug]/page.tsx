@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import Comments from "@/app/comments";
+import SubscribeForm from "@/app/subscribe-form";
 
 interface Post {
   title: string;
@@ -68,6 +69,7 @@ export default async function BlogPost({
       <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
         {post.content}
       </div>
+      <SubscribeForm />
       <Comments slug={slug} />
     </div>
   );
