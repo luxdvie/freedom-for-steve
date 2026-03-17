@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { blobs } = await list({ prefix: `comments/${slug}/` });
+    const prefix = `comments/${slug}/`;
+    const { blobs } = await list({ prefix });
+
+    if (blobs.length === 0) {
+      return NextResponse.json([]);
+    }
+
     const comments = await Promise.all(
       blobs.map(async (blob) => {
         const res = await fetch(blob.url);
@@ -32,7 +38,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(approved);
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    return NextResponse.json(
+      { error: String(e), message: (e as Error).message },
+      { status: 500 }
+    );
   }
 }
 
