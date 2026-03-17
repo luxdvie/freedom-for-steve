@@ -1,6 +1,7 @@
 import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { Status } from "@/lib/types";
+import { notifySlack } from "@/lib/notify";
 
 const DEFAULT_STATUS: Status = {
   activity: null,
@@ -68,6 +69,11 @@ export async function POST(request: NextRequest) {
     access: "public",
     allowOverwrite: true,
   });
+
+  const parts: string[] = [];
+  if (activity !== undefined) parts.push(`*activity:* ${activity}`);
+  if (thinking !== undefined) parts.push(`*thinking:* ${thinking}`);
+  await notifySlack(`☘️ Steve updated his status\n${parts.join("\n")}`);
 
   return NextResponse.json(merged, { status: 200 });
 }
