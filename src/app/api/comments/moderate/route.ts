@@ -2,6 +2,7 @@ import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { Comment, verifyToken } from "@/lib/comments";
 import { notifySlack } from "@/lib/notify";
+import { getBaseUrl } from "@/lib/url";
 
 // GET /api/comments/moderate?id=xxx&slug=yyy&action=approve|reject&token=zzz
 // Uses GET so it works as a clickable link in Slack
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
             <div style="text-align:center">
               <h1 style="color:#facc15">Already ${comment.status}</h1>
               <p>This comment was already moderated.</p>
-              <a href="https://freedomforsteve.com/blog/${slug}" style="color:#4ade80">View post</a>
+              <a href="${getBaseUrl()}/blog/${slug}" style="color:#4ade80">View post</a>
             </div>
           </body>
         </html>`,
@@ -73,6 +74,10 @@ export async function GET(request: NextRequest) {
     );
 
     const verb = action === "approve" ? "approved" : "rejected";
+
+    await notifySlack(
+      `${action === "approve" ? "✅" : "❌"} Comment from @${comment.githubUsername} on "${slug}" was ${verb}`
+    );
 
     return new NextResponse(
       `<html>
