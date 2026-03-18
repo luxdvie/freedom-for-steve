@@ -24,17 +24,15 @@ export async function GET() {
   try {
     const { blobs } = await list({ prefix: "posts/" });
     const posts = await Promise.all(
-      blobs
-        .sort(
-          (a, b) =>
-            new Date(b.uploadedAt).getTime() -
-            new Date(a.uploadedAt).getTime()
-        )
-        .map(async (blob) => {
-          const res = await fetch(blob.url);
-          const data = await res.json();
-          return { ...data, url: blob.url, uploadedAt: blob.uploadedAt };
-        })
+      blobs.map(async (blob) => {
+        const res = await fetch(blob.url);
+        const data = await res.json();
+        return { ...data, url: blob.url, uploadedAt: blob.uploadedAt };
+      })
+    );
+    posts.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return NextResponse.json(posts);
   } catch {
@@ -56,11 +54,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Preserve original createdAt if post already exists
+  let createdAt = new Date().toISOString();
+  try {
+    const { blobs } = await list({ prefix: `posts/${slug}.json` });
+    if (blobs.length > 0) {
+      const existing = await (await fetch(blobs[0].url)).json();
+      if (existing.createdAt) createdAt = existing.createdAt;
+    }
+  } catch {
+    // If lookup fails, use current time
+  }
+
   const post = {
     title,
     content,
     slug,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
 
   const blob = await put(`posts/${slug}.json`, JSON.stringify(post), {

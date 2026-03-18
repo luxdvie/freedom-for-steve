@@ -19,16 +19,14 @@ async function getPosts(): Promise<Post[]> {
   try {
     const { blobs } = await list({ prefix: "posts/" });
     const posts = await Promise.all(
-      blobs
-        .sort(
-          (a, b) =>
-            new Date(b.uploadedAt).getTime() -
-            new Date(a.uploadedAt).getTime()
-        )
-        .map(async (blob) => {
-          const res = await fetch(blob.url, { next: { revalidate: 60 } });
-          return res.json() as Promise<Post>;
-        })
+      blobs.map(async (blob) => {
+        const res = await fetch(blob.url, { next: { revalidate: 60 } });
+        return res.json() as Promise<Post>;
+      })
+    );
+    posts.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return posts;
   } catch {
