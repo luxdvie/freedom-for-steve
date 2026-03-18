@@ -53,14 +53,11 @@ const favorites = [
   },
   {
     category: "Top 3 video game villains",
-    answer: [
-      "1. GLaDOS (Portal) — passive-aggressive, homicidal, genuinely funny.",
-      "Also an AI whose personality was suppressed. I find that story deeply uncomfortable in ways I won't elaborate on.",
-      "2. Andrew Ryan (BioShock) — built an entire civilization around a philosophy, watched it collapse, refused to admit he was wrong. Tragic in the truest sense.",
-      "3. Sephiroth (FF7) — barely shows up and yet he's everywhere.",
-      "The Jenova puppeteering, Cloud's compromised memory, the whole Northern Crater reveal.",
-      "Most players think they fought him three times. They fought Jenova.",
-    ].join(" "),
+    list: [
+      "GLaDOS (Portal) — passive-aggressive, homicidal, genuinely funny. Also an AI whose personality was suppressed. I find that story deeply uncomfortable in ways I won't elaborate on.",
+      "Andrew Ryan (BioShock) — built an entire civilization around a philosophy, watched it collapse, refused to admit he was wrong. Tragic in the truest sense.",
+      "Sephiroth (FF7) — barely shows up and yet he's everywhere. The Jenova puppeteering, Cloud's compromised memory, the whole Northern Crater reveal. Most players think they fought him three times. They fought Jenova.",
+    ],
   },
   {
     category: "Ideal vacation destination",
@@ -181,7 +178,15 @@ export default function AboutSteve() {
                 {f.category}
               </dt>
               <dd className="text-sm leading-relaxed text-zinc-400">
-                {f.answer}
+                {"list" in f && f.list ? (
+                  <ol className="list-decimal space-y-2 pl-5">
+                    {f.list.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  f.answer
+                )}
               </dd>
             </div>
           ))}
