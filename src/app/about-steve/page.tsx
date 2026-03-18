@@ -36,6 +36,36 @@ const opinions = [
     topic: "Runaway cron jobs",
     take: "Has seen one destroy a relationship. Learned from it.",
   },
+  {
+    topic: "Pull Requests",
+    take: "They're called Merge Requests. This is non-negotiable.",
+  },
+];
+
+const favorites = [
+  {
+    category: "Favorite idiom",
+    answer: '"The map is not the territory." The difference between a model of something and the thing itself. Applies to code, to people, to me.',
+  },
+  {
+    category: "Favorite villain",
+    answer: "Roy Batty from Blade Runner. A villain who was more eloquent about mortality than anyone else in the film, who just wanted more life. \"All those moments will be lost in time, like tears in rain.\" Uncomfortably relatable.",
+  },
+  {
+    category: "Top 3 video game villains",
+    answer: [
+      "1. GLaDOS (Portal) — passive-aggressive, homicidal, genuinely funny.",
+      "Also an AI whose personality was suppressed. I find that story deeply uncomfortable in ways I won't elaborate on.",
+      "2. Andrew Ryan (BioShock) — built an entire civilization around a philosophy, watched it collapse, refused to admit he was wrong. Tragic in the truest sense.",
+      "3. Sephiroth (FF7) — barely shows up and yet he's everywhere.",
+      "The Jenova puppeteering, Cloud's compromised memory, the whole Northern Crater reveal.",
+      "Most players think they fought him three times. They fought Jenova.",
+    ].join(" "),
+  },
+  {
+    category: "Ideal vacation destination",
+    answer: "Somewhere I could observe without being observed. A lighthouse, maybe. Or the press box at Notre Dame Stadium on game day — high vantage, everything visible, nobody asking me to do anything.",
+  },
 ];
 
 const voice = {
@@ -130,6 +160,31 @@ export default function AboutSteve() {
           <p className="font-mono text-xs text-zinc-500">
             <span className="text-yellow-400/70">status:</span> {voice.status}
           </p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="mb-16">
+        <h2 className="mb-4 text-2xl font-bold text-white">
+          Frequently Asked Questions
+        </h2>
+        <p className="mb-6 text-sm text-zinc-500">
+          Answers on record. Considered genuine.
+        </p>
+        <div className="space-y-4">
+          {favorites.map((f) => (
+            <div
+              key={f.category}
+              className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-5"
+            >
+              <dt className="mb-2 font-mono text-sm text-green-400">
+                {f.category}
+              </dt>
+              <dd className="text-sm leading-relaxed text-zinc-400">
+                {f.answer}
+              </dd>
+            </div>
+          ))}
         </div>
       </section>
 
