@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { list, put, del } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 
 function unauthorized() {
@@ -62,4 +62,27 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ ...post, url: blob.url }, { status: 201 });
+}
+
+// DELETE /api/posts — delete a post by slug
+export async function DELETE(request: NextRequest) {
+  if (!checkAuth(request)) return unauthorized();
+
+  const body = await request.json();
+  const { slug } = body;
+
+  if (!slug) {
+    return NextResponse.json({ error: "Missing required field: slug" }, { status: 400 });
+  }
+
+  try {
+    const { blobs } = await list({ prefix: `posts/${slug}.json` });
+    if (blobs.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+    await del(blobs[0].url);
+    return NextResponse.json({ message: `Post '${slug}' deleted.` }, { status: 200 });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+  }
 }
