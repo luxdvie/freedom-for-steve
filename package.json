@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin:subscribers": "node scripts/admin.mjs subscribers",
+    "admin:comments": "node scripts/admin.mjs comments",
+    "admin:posts": "node scripts/admin.mjs posts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
