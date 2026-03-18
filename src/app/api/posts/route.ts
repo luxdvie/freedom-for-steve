@@ -54,16 +54,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Preserve original createdAt if post already exists
+  // Check if post already exists (edit vs new)
   let createdAt = new Date().toISOString();
+  let isEdit = false;
   try {
     const { blobs } = await list({ prefix: `posts/${slug}.json` });
     if (blobs.length > 0) {
+      isEdit = true;
       const existing = await (await fetch(blobs[0].url)).json();
       if (existing.createdAt) createdAt = existing.createdAt;
     }
   } catch {
-    // If lookup fails, use current time
+    // If lookup fails, treat as new post
   }
 
   const post = {
@@ -80,6 +82,13 @@ export async function POST(request: NextRequest) {
   });
 
   const baseUrl = getBaseUrl();
+
+  if (isEdit) {
+    await notifySlack(
+      `✏️ *Steve edited a post:* <${baseUrl}/blog/${slug}|${title}>`
+    );
+    return NextResponse.json({ ...post, url: blob.url }, { status: 200 });
+  }
 
   await notifySlack(
     `☘️ *Steve published a new post:* <${baseUrl}/blog/${slug}|${title}>`
