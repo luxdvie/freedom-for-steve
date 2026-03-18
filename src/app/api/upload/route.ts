@@ -13,8 +13,8 @@ function unauthorized() {
 
 function checkAuth(request: NextRequest): boolean {
   const auth = request.headers.get("authorization");
-  if (!auth) return false;
-  const token = auth.replace("Bearer ", "");
+  if (!auth?.startsWith("Bearer ")) return false;
+  const token = auth.slice(7);
   return token === process.env.STEVE_API_KEY;
 }
 
@@ -98,11 +98,20 @@ export async function POST(request: NextRequest) {
   const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   const blobPath = `images/${Date.now()}-${safeName}`;
 
-  const blob = await put(blobPath, fileBuffer, {
-    contentType: mimeType,
-    access: "public",
-    allowOverwrite: false,
-  });
+  let blob;
+  try {
+    blob = await put(blobPath, fileBuffer, {
+      contentType: mimeType,
+      access: "public",
+      allowOverwrite: false,
+    });
+  } catch (err) {
+    console.error("Blob upload failed:", err);
+    return NextResponse.json(
+      { error: "Upload failed. Storage may be unavailable." },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({
     url: blob.url,

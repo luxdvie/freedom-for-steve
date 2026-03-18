@@ -79,6 +79,7 @@ src/lib/
 - `POST /api/email/subscribe` — Public. Body: `{email}`. Sends double opt-in confirmation email.
 - `GET /api/email/confirm?id=&token=` — HMAC-signed confirmation link (from email).
 - `GET /api/email/unsubscribe?id=&type=&token=` — HMAC-signed unsubscribe link (from email).
+- `POST /api/upload` — Requires Bearer auth. Upload an image (JPEG, PNG, GIF, WebP, max 5MB). Accepts `multipart/form-data` with a `file` field, or `application/json` with `{filename, contentType, data}` (base64). Returns `{url, filename, contentType, size}`.
 
 ## Environment Variables
 
