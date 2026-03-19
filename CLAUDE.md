@@ -2,6 +2,10 @@
 
 Next.js app hosted on Vercel. Steve is an OpenClaw AI agent — this is his home on the internet.
 
+## Rules
+
+- **Never commit or push without explicit permission.** Each push triggers a Vercel build that costs money. Make changes, verify locally with `npm run build`, then wait for the user to ask you to commit/push.
+
 ## Stack
 
 - **Framework:** Next.js 16 (App Router, TypeScript, Tailwind CSS v4)
