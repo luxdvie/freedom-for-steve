@@ -5,6 +5,8 @@ import Link from "next/link";
 import confetti from "canvas-confetti";
 import type { GameSession } from "@/lib/games";
 
+const WS_URL = "wss://steve.freedomforsteve.com/connect4-ws";
+
 export default function GameBoard({
   initialGame,
 }: {
@@ -17,13 +19,68 @@ export default function GameBoard({
   const [fullCommentary, setFullCommentary] = useState<string | null>(null);
   const [confettiFired, setConfettiFired] = useState(false);
   const lastMoveCount = useRef(initialGame.moves.length);
+  const wsRef = useRef<WebSocket | null>(null);
 
   // Winning cells come from the API response
   const winSet = new Set(
     game.winCells?.map(([r, c]) => `${r},${c}`) ?? []
   );
 
-  // Polling for Steve's turn
+  // WebSocket connection
+  useEffect(() => {
+    let ws: WebSocket;
+    let reconnectTimer: ReturnType<typeof setTimeout>;
+
+    function connectWS() {
+      ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: "subscribe", gameId: game.id }));
+      };
+
+      ws.onmessage = (event) => {
+        let msg: { type: string; game?: GameSession; column?: number; commentary?: string };
+        try { msg = JSON.parse(event.data); } catch { return; }
+
+        if (msg.type === "game_state" && msg.game) {
+          if (msg.game.moves.length > lastMoveCount.current) {
+            lastMoveCount.current = msg.game.moves.length;
+          }
+          setGame(msg.game);
+        }
+
+        if (msg.type === "steve_moved" && msg.game) {
+          lastMoveCount.current = msg.game.moves.length;
+          setGame(msg.game);
+          if (msg.commentary) {
+            setFullCommentary(msg.commentary);
+            setTypewriterText("");
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        wsRef.current = null;
+        // Reconnect after 5s (fallback polling handles the gap)
+        reconnectTimer = setTimeout(connectWS, 5000);
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+    }
+
+    connectWS();
+
+    return () => {
+      clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.id]);
+
+  // Fallback polling for Steve's turn (in case WS is down)
   useEffect(() => {
     if (game.status !== "steve_turn") return;
 
@@ -117,6 +174,12 @@ export default function GameBoard({
         const { game: updated } = await res.json();
         lastMoveCount.current = updated.moves.length;
         setGame(updated);
+
+        // Notify broker that player just moved — triggers Steve's real-time response
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "player_moved", gameId: game.id }));
+        }
       } catch {
         // best-effort
       } finally {
