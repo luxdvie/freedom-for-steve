@@ -163,7 +163,7 @@ export async function listGamesForSteve(): Promise<GameSession[]> {
     const { blobs } = await list({ prefix: "games/" });
     const games = await Promise.all(
       blobs.map(async (blob) => {
-        const res = await fetch(blob.url);
+        const res = await fetch(blob.url, { cache: "no-store" });
         return res.json() as Promise<GameSession>;
       })
     );
@@ -178,7 +178,7 @@ export async function getPlayerGames(githubLogin: string): Promise<GameSession[]
     const { blobs } = await list({ prefix: "games/" });
     const games = await Promise.all(
       blobs.map(async (blob) => {
-        const res = await fetch(blob.url);
+        const res = await fetch(blob.url, { cache: "no-store" });
         return res.json() as Promise<GameSession>;
       })
     );
