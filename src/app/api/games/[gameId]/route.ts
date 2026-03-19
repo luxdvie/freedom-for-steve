@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { getGame, saveGame } from "@/lib/games";
+
+function checkSteveAuth(request: NextRequest): boolean {
+  const auth = request.headers.get("authorization");
+  if (!auth) return false;
+  const token = auth.replace("Bearer ", "");
+  return token === process.env.STEVE_API_KEY;
+}
+
+// GET /api/games/[gameId] — get game state
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ gameId: string }> }
+) {
+  const { gameId } = await params;
+  const isSteve = checkSteveAuth(request);
+  const user = isSteve ? null : await getSession();
+
+  if (!isSteve && !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const game = await getGame(gameId);
+  if (!game) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+
+  if (!isSteve && game.player.githubLogin !== user!.login) {
+    return NextResponse.json({ error: "Not your game" }, { status: 403 });
+  }
+
+  // Update playerLastSeen when called by player (not Steve)
+  if (!isSteve) {
+    game.playerLastSeen = new Date().toISOString();
+    await saveGame(game);
+  }
+
+  return NextResponse.json(game);
+}
