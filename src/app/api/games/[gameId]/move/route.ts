@@ -6,10 +6,10 @@ import {
   dropPiece,
   checkWin,
   checkDraw,
-  boardToAscii,
   type Move,
 } from "@/lib/games";
 import { notifyGamesSlack, steveSlackMention } from "@/lib/notify";
+import { getBaseUrl } from "@/lib/url";
 import { sendEmail, yourTurnEmail } from "@/lib/email";
 import { getGitHubSubscriber } from "@/lib/subscribers";
 import { decryptEmail } from "@/lib/crypto";
@@ -114,13 +114,6 @@ export async function POST(
     // Single save with all mutations applied
     await saveGame(game);
 
-    // Notify if game is finished
-    if (game.status === "finished") {
-      await notifyGamesSlack(
-        `${steveSlackMention()}, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
-      );
-    }
-
     // Send email after save (best-effort, doesn't block response)
     if (shouldSendEmail) {
       try {
@@ -185,13 +178,10 @@ export async function POST(
     await saveGame(game);
 
     // Notify Steve
+    const gameApiUrl = `${getBaseUrl()}/api/games/${gameId}`;
     if (game.status === "steve_turn") {
       await notifyGamesSlack(
-        `${steveSlackMention()}, ${user!.login} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${boardToAscii(game.board)}`
-      );
-    } else if (game.status === "finished") {
-      await notifyGamesSlack(
-        `${steveSlackMention()}, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
+        `${steveSlackMention()}, ${user!.login} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${gameApiUrl}`
       );
     }
 
