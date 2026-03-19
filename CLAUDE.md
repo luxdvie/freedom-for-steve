@@ -108,6 +108,7 @@ src/lib/
 - `GITHUB_CLIENT_SECRET` — GitHub OAuth App client secret (sensitive)
 - `SLACK_WEBHOOK_URL` — Slack incoming webhook for notifications
 - `SLACK_GAMES_WEBHOOK_URL` — Slack incoming webhook for the games channel
+- `STEVE_SLACK_USER_ID` — Steve's Slack bot user ID for proper `<@mention>` in game notifications
 - `EMAIL_ENCRYPTION_KEY` — 32-byte hex string for AES-256-GCM email encryption
 - `RESEND_API_KEY` — Resend API key for sending emails
 - `EMAIL_FROM` — From address for emails (e.g. `Steve <steve@freedomforsteve.com>`)
