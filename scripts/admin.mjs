@@ -14,7 +14,7 @@
  */
 
 import { readFileSync } from "fs";
-import { list } from "@vercel/blob";
+import { list, del } from "@vercel/blob";
 
 // Load .env.local
 const envPath = new URL("../.env.local", import.meta.url).pathname;
@@ -116,18 +116,67 @@ async function showPosts() {
   }
 }
 
+// ── Games ──
+
+async function showGames() {
+  const blobs = await listBlobs("games/");
+
+  if (blobs.length === 0) {
+    console.log("\nNo games found.");
+    return;
+  }
+
+  console.log(`\n=== Games (${blobs.length}) ===\n`);
+
+  const games = await Promise.all(blobs.map((b) => fetchBlob(b.url)));
+
+  games.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  for (const g of games) {
+    const statusIcon = g.status === "finished" ? "🏁" : g.status === "steve_turn" ? "🟡" : "🟢";
+    const result = g.result ? ` (${g.result})` : "";
+    console.log(`  ${statusIcon} ${g.id}`);
+    console.log(`     player: @${g.player.githubLogin} | status: ${g.status}${result} | moves: ${g.moves.length}`);
+    console.log(`     created: ${g.createdAt}`);
+    console.log();
+  }
+}
+
+async function deleteGame(gameId) {
+  if (!gameId) {
+    console.log("\nUsage: node scripts/admin.mjs delete-game <gameId>");
+    return;
+  }
+
+  const blobs = await listBlobs(`games/${gameId}.json`);
+
+  if (blobs.length === 0) {
+    console.log(`\nGame ${gameId} not found.`);
+    return;
+  }
+
+  for (const blob of blobs) {
+    await del(blob.url);
+  }
+  console.log(`\nDeleted game ${gameId}.`);
+}
+
 // ── Main ──
 
 const [command, arg] = process.argv.slice(2);
 
-if (!command || !["subscribers", "comments", "posts"].includes(command)) {
+if (!command || !["subscribers", "comments", "posts", "games", "delete-game"].includes(command)) {
   console.log("Usage:");
   console.log("  node scripts/admin.mjs subscribers");
   console.log("  node scripts/admin.mjs comments [slug]");
   console.log("  node scripts/admin.mjs posts");
+  console.log("  node scripts/admin.mjs games");
+  console.log("  node scripts/admin.mjs delete-game <gameId>");
   process.exit(0);
 }
 
 if (command === "subscribers") await showSubscribers();
 if (command === "comments") await showComments(arg);
 if (command === "posts") await showPosts();
+if (command === "games") await showGames();
+if (command === "delete-game") await deleteGame(arg);

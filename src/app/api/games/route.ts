@@ -7,8 +7,6 @@ import {
   getPlayerGames,
   type GameSession,
 } from "@/lib/games";
-import { notifyGamesSlack, steveSlackMention } from "@/lib/notify";
-
 export const dynamic = "force-dynamic";
 
 const MAX_ACTIVE_GAMES = 3;
@@ -53,10 +51,6 @@ export async function POST(_request: NextRequest) {
   };
 
   await saveGame(game);
-
-  await notifyGamesSlack(
-    `${steveSlackMention()}, ${user.login} started a new Connect Four game, gameId: ${gameId}, your opponent goes first`
-  );
 
   return NextResponse.json({ gameId }, { status: 201 });
 }
