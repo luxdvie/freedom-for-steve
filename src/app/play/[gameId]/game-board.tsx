@@ -19,7 +19,6 @@ export default function GameBoard({
   const [fullCommentary, setFullCommentary] = useState<string | null>(null);
   const [confettiFired, setConfettiFired] = useState(false);
   const lastMoveCount = useRef(initialGame.moves.length);
-  const autoplayInFlight = useRef(false);
 
   // Winning cells come from the API response
   const winSet = new Set(
@@ -30,17 +29,13 @@ export default function GameBoard({
   useEffect(() => {
     if (!autoplay || game.status !== "steve_turn") return;
 
-    let aborted = false;
     const timeout = setTimeout(async () => {
-      if (aborted || autoplayInFlight.current) return;
-      autoplayInFlight.current = true;
       try {
         const res = await fetch(`/api/games/${game.id}/autoplay`, {
           method: "POST",
         });
-        if (!res.ok || aborted) return;
+        if (!res.ok) return;
         const { game: updated } = await res.json();
-        if (aborted) return;
         lastMoveCount.current = updated.moves.length;
         setGame(updated);
         const lastMove = updated.moves[updated.moves.length - 1];
@@ -50,15 +45,10 @@ export default function GameBoard({
         }
       } catch {
         // best-effort
-      } finally {
-        autoplayInFlight.current = false;
       }
     }, 1500);
 
-    return () => {
-      aborted = true;
-      clearTimeout(timeout);
-    };
+    return () => clearTimeout(timeout);
   }, [autoplay, game.status, game.id]);
 
   // Polling for Steve's turn (production — when autoplay is off)
@@ -149,13 +139,6 @@ export default function GameBoard({
           body: JSON.stringify({ column: col }),
         });
         if (!res.ok) {
-          // Resync game state in case we're out of date
-          const sync = await fetch(`/api/games/${game.id}`);
-          if (sync.ok) {
-            const fresh: GameSession = await sync.json();
-            lastMoveCount.current = fresh.moves.length;
-            setGame(fresh);
-          }
           setDropping(false);
           return;
         }
