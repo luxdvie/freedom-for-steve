@@ -15,6 +15,11 @@ export async function notifySlack(text: string) {
 
 const SLACK_GAMES_WEBHOOK_URL = process.env.SLACK_GAMES_WEBHOOK_URL;
 
+export function steveSlackMention(): string {
+  const id = process.env.STEVE_SLACK_USER_ID;
+  return id ? `<@${id}>` : "@Steve";
+}
+
 export async function notifyGamesSlack(text: string) {
   if (!SLACK_GAMES_WEBHOOK_URL) return;
   try {

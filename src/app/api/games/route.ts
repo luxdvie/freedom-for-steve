@@ -7,7 +7,7 @@ import {
   getPlayerGames,
   type GameSession,
 } from "@/lib/games";
-import { notifyGamesSlack } from "@/lib/notify";
+import { notifyGamesSlack, steveSlackMention } from "@/lib/notify";
 
 const MAX_ACTIVE_GAMES = 3;
 
@@ -53,7 +53,7 @@ export async function POST(_request: NextRequest) {
   await saveGame(game);
 
   await notifyGamesSlack(
-    `@Steve, ${user.login} started a new Connect Four game, gameId: ${gameId}, your opponent goes first`
+    `${steveSlackMention()}, ${user.login} started a new Connect Four game, gameId: ${gameId}, your opponent goes first`
   );
 
   return NextResponse.json({ gameId }, { status: 201 });

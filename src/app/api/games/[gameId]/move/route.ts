@@ -9,7 +9,7 @@ import {
   boardToAscii,
   type Move,
 } from "@/lib/games";
-import { notifyGamesSlack } from "@/lib/notify";
+import { notifyGamesSlack, steveSlackMention } from "@/lib/notify";
 import { sendEmail, yourTurnEmail } from "@/lib/email";
 import { getGitHubSubscriber } from "@/lib/subscribers";
 import { decryptEmail } from "@/lib/crypto";
@@ -117,7 +117,7 @@ export async function POST(
     // Notify if game is finished
     if (game.status === "finished") {
       await notifyGamesSlack(
-        `@Steve, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
+        `${steveSlackMention()}, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
       );
     }
 
@@ -187,11 +187,11 @@ export async function POST(
     // Notify Steve
     if (game.status === "steve_turn") {
       await notifyGamesSlack(
-        `@Steve, ${user!.login} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${boardToAscii(game.board)}`
+        `${steveSlackMention()}, ${user!.login} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${boardToAscii(game.board)}`
       );
     } else if (game.status === "finished") {
       await notifyGamesSlack(
-        `@Steve, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
+        `${steveSlackMention()}, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
       );
     }
 
