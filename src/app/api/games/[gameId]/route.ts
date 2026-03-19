@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, checkSteveAuth } from "@/lib/auth";
-import { getGame, saveGame } from "@/lib/games";
+import { getGame } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
-const LAST_SEEN_THROTTLE = 60 * 1000; // Only update playerLastSeen once per minute
-
-// GET /api/games/[gameId] — get game state
+// GET /api/games/[gameId] — get game state (read-only, no writes)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ gameId: string }> }
@@ -26,18 +24,6 @@ export async function GET(
 
   if (!isSteve && game.player.githubLogin !== user!.login) {
     return NextResponse.json({ error: "Not your game" }, { status: 403 });
-  }
-
-  // Throttle playerLastSeen updates to avoid a blob write on every poll
-  if (!isSteve) {
-    const now = Date.now();
-    const lastSeen = game.playerLastSeen
-      ? new Date(game.playerLastSeen).getTime()
-      : 0;
-    if (now - lastSeen > LAST_SEEN_THROTTLE) {
-      game.playerLastSeen = new Date().toISOString();
-      await saveGame(game);
-    }
   }
 
   return NextResponse.json(game, {
