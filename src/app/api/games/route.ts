@@ -9,6 +9,8 @@ import {
 } from "@/lib/games";
 import { notifyGamesSlack, steveSlackMention } from "@/lib/notify";
 
+export const dynamic = "force-dynamic";
+
 const MAX_ACTIVE_GAMES = 3;
 
 // POST /api/games — start a new game (GitHub session required)
@@ -66,5 +68,7 @@ export async function GET(request: NextRequest) {
   }
 
   const games = await listGamesForSteve();
-  return NextResponse.json(games);
+  return NextResponse.json(games, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }

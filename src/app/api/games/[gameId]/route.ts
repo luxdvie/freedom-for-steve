@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, checkSteveAuth } from "@/lib/auth";
 import { getGame, saveGame } from "@/lib/games";
 
+export const dynamic = "force-dynamic";
+
 const LAST_SEEN_THROTTLE = 60 * 1000; // Only update playerLastSeen once per minute
 
 // GET /api/games/[gameId] — get game state
@@ -38,5 +40,7 @@ export async function GET(
     }
   }
 
-  return NextResponse.json(game);
+  return NextResponse.json(game, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }
