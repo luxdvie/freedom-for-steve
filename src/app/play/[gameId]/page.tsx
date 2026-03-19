@@ -49,5 +49,7 @@ export default async function GamePage({
     );
   }
 
-  return <GameBoard initialGame={game} />;
+  const autoplay = process.env.NODE_ENV === "development";
+
+  return <GameBoard initialGame={game} autoplay={autoplay} />;
 }

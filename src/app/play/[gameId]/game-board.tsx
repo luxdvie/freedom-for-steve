@@ -7,8 +7,10 @@ import type { GameSession } from "@/lib/games";
 
 export default function GameBoard({
   initialGame,
+  autoplay = false,
 }: {
   initialGame: GameSession;
+  autoplay?: boolean;
 }) {
   const [game, setGame] = useState<GameSession>(initialGame);
   const [hoverCol, setHoverCol] = useState<number | null>(null);
@@ -23,9 +25,35 @@ export default function GameBoard({
     game.winCells?.map(([r, c]) => `${r},${c}`) ?? []
   );
 
-  // Polling for Steve's turn
+  // Autoplay: simulate Steve's move in dev mode
   useEffect(() => {
-    if (game.status !== "steve_turn") return;
+    if (!autoplay || game.status !== "steve_turn") return;
+
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/games/${game.id}/autoplay`, {
+          method: "POST",
+        });
+        if (!res.ok) return;
+        const { game: updated } = await res.json();
+        lastMoveCount.current = updated.moves.length;
+        setGame(updated);
+        const lastMove = updated.moves[updated.moves.length - 1];
+        if (lastMove?.commentary) {
+          setFullCommentary(lastMove.commentary);
+          setTypewriterText("");
+        }
+      } catch {
+        // best-effort
+      }
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, [autoplay, game.status, game.id]);
+
+  // Polling for Steve's turn (production — when autoplay is off)
+  useEffect(() => {
+    if (autoplay || game.status !== "steve_turn") return;
 
     const interval = setInterval(async () => {
       try {
@@ -48,7 +76,7 @@ export default function GameBoard({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [game.status, game.id]);
+  }, [autoplay, game.status, game.id]);
 
   // Typewriter effect
   useEffect(() => {
