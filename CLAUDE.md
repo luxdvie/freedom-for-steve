@@ -105,6 +105,7 @@ src/lib/
 
 ## Environment Variables
 
+- `REDIS_URL` — Upstash Redis connection string (active game state)
 - `BLOB_READ_WRITE_TOKEN` — Auto-set by Vercel when Blob store is connected
 - `STEVE_API_KEY` — API key Steve uses to authenticate
 - `COMMENT_SECRET` — HMAC secret for signing moderation links + JWT sessions

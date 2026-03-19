@@ -1,3 +1,4 @@
+import { createClient } from "redis";
 import { list, put } from "@vercel/blob";
 import { createHmac, timingSafeEqual } from "crypto";
 
@@ -61,12 +62,11 @@ export function checkWin(
 ): [number, number][] | null {
   const rows = 6;
   const cols = 7;
-
   // Check all directions: horizontal, vertical, diagonal-down-right, diagonal-down-left
   const directions = [
-    [0, 1], // horizontal
-    [1, 0], // vertical
-    [1, 1], // diagonal down-right
+    [0, 1],  // horizontal
+    [1, 0],  // vertical
+    [1, 1],  // diagonal down-right
     [1, -1], // diagonal down-left
   ];
 
@@ -134,12 +134,44 @@ export function verifyGameToken(
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-// Blob CRUD
-// TODO: listGamesForSteve and getPlayerGames fetch all game blobs. Consider
-// splitting into games/active/ vs games/finished/ prefixes or adding pagination
-// if game volume grows beyond a few hundred.
+// Redis client — reuse connection across requests in the same process
+let redisClient: ReturnType<typeof createClient> | null = null;
+
+async function getRedis() {
+  if (!redisClient || !redisClient.isOpen) {
+    const url = process.env.REDIS_URL;
+    if (!url) throw new Error("REDIS_URL not set");
+    redisClient = createClient({ url });
+    redisClient.on("error", () => {
+      // Let the client's built-in reconnect handle it
+    });
+    await redisClient.connect();
+  }
+  return redisClient;
+}
+
+// Redis keys
+function gameKey(gameId: string): string {
+  return `game:${gameId}`;
+}
+function playerGamesKey(githubLogin: string): string {
+  return `player-games:${githubLogin}`;
+}
+const STEVE_GAMES_KEY = "steve-games";
+
+// Game CRUD — Redis for active games, Blob for finished archive
 
 export async function getGame(gameId: string): Promise<GameSession | null> {
+  // Try Redis first (active games)
+  try {
+    const redis = await getRedis();
+    const data = await redis.get(gameKey(gameId));
+    if (data) return JSON.parse(data) as GameSession;
+  } catch {
+    // Fall through to Blob
+  }
+
+  // Fall back to Blob (finished games)
   try {
     const { blobs } = await list({ prefix: `games/${gameId}.json` });
     if (blobs.length === 0) return null;
@@ -151,44 +183,94 @@ export async function getGame(gameId: string): Promise<GameSession | null> {
 }
 
 export async function saveGame(game: GameSession): Promise<void> {
-  await put(`games/${game.id}.json`, JSON.stringify(game), {
-    contentType: "application/json",
-    access: "public",
-    allowOverwrite: true,
-  });
+  const redis = await getRedis();
+
+  if (game.status === "finished") {
+    // Archive to Blob
+    await put(`games/${game.id}.json`, JSON.stringify(game), {
+      contentType: "application/json",
+      access: "public",
+      allowOverwrite: true,
+    });
+    // Clean up Redis atomically
+    await redis
+      .multi()
+      .del(gameKey(game.id))
+      .sRem(STEVE_GAMES_KEY, game.id)
+      .sRem(playerGamesKey(game.player.githubLogin), game.id)
+      .exec();
+  } else {
+    // Active game → Redis
+    await redis.set(gameKey(game.id), JSON.stringify(game));
+    // Track in player's game set
+    await redis.sAdd(playerGamesKey(game.player.githubLogin), game.id);
+    // Track in Steve's queue if it's his turn
+    if (game.status === "steve_turn") {
+      await redis.sAdd(STEVE_GAMES_KEY, game.id);
+    } else {
+      await redis.sRem(STEVE_GAMES_KEY, game.id);
+    }
+  }
 }
 
 export async function listGamesForSteve(): Promise<GameSession[]> {
   try {
-    const { blobs } = await list({ prefix: "games/" });
+    const redis = await getRedis();
+    const gameIds = await redis.sMembers(STEVE_GAMES_KEY);
+    if (!gameIds || gameIds.length === 0) return [];
+
     const games = await Promise.all(
-      blobs.map(async (blob) => {
-        const res = await fetch(blob.url, { cache: "no-store" });
-        return res.json() as Promise<GameSession>;
+      gameIds.map(async (id) => {
+        const data = await redis.get(gameKey(id));
+        return data ? (JSON.parse(data) as GameSession) : null;
       })
     );
-    return games.filter((g) => g.status === "steve_turn");
+    return games.filter(
+      (g): g is GameSession => g !== null && g.status === "steve_turn"
+    );
   } catch {
     return [];
   }
 }
 
 export async function getPlayerGames(githubLogin: string): Promise<GameSession[]> {
+  // Active games from Redis
+  let activeGames: GameSession[] = [];
+  try {
+    const redis = await getRedis();
+    const activeIds = await redis.sMembers(playerGamesKey(githubLogin));
+    if (activeIds && activeIds.length > 0) {
+      const results = await Promise.all(
+        activeIds.map(async (id) => {
+          const data = await redis.get(gameKey(id));
+          return data ? (JSON.parse(data) as GameSession) : null;
+        })
+      );
+      activeGames = results.filter((g): g is GameSession => g !== null);
+    }
+  } catch {
+    // best-effort
+  }
+
+  // Finished games from Blob
+  let finishedGames: GameSession[] = [];
   try {
     const { blobs } = await list({ prefix: "games/" });
-    const games = await Promise.all(
+    const allBlob = await Promise.all(
       blobs.map(async (blob) => {
         const res = await fetch(blob.url, { cache: "no-store" });
         return res.json() as Promise<GameSession>;
       })
     );
-    return games
-      .filter((g) => g.player.githubLogin === githubLogin)
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+    finishedGames = allBlob.filter(
+      (g) => g.player.githubLogin === githubLogin && g.status === "finished"
+    );
   } catch {
-    return [];
+    // best-effort for history
   }
+
+  return [...activeGames, ...finishedGames].sort(
+    (a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 }
