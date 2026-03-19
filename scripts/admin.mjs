@@ -10,11 +10,12 @@
  *   node scripts/admin.mjs comments <slug> # List comments for a specific post
  *   node scripts/admin.mjs posts          # List all posts
  *
- * Requires .env.local with BLOB_READ_WRITE_TOKEN.
+ * Requires .env.local with BLOB_READ_WRITE_TOKEN and REDIS_URL.
  */
 
 import { readFileSync } from "fs";
 import { list, del } from "@vercel/blob";
+import { createClient } from "redis";
 
 // Load .env.local
 const envPath = new URL("../.env.local", import.meta.url).pathname;
@@ -118,24 +119,58 @@ async function showPosts() {
 
 // ── Games ──
 
-async function showGames() {
-  const blobs = await listBlobs("games/");
+async function getRedisGames() {
+  if (!process.env.REDIS_URL) return [];
+  const redis = createClient({ url: process.env.REDIS_URL });
+  redis.on("error", () => {});
+  await redis.connect();
+  try {
+    // Gather all game IDs from steve-games and scan for game:* keys
+    const keys = [];
+    for await (const key of redis.scanIterator({ MATCH: "game:*", COUNT: 100 })) {
+      keys.push(key);
+    }
+    const games = [];
+    for (const key of keys) {
+      const data = await redis.get(key);
+      if (data) games.push(JSON.parse(data));
+    }
+    return games;
+  } finally {
+    await redis.quit();
+  }
+}
 
-  if (blobs.length === 0) {
+async function showGames() {
+  // Active games from Redis
+  const activeGames = await getRedisGames();
+
+  // Finished games from Blob
+  const blobs = await listBlobs("games/");
+  const finishedGames = await Promise.all(blobs.map((b) => fetchBlob(b.url)));
+
+  const all = [...activeGames, ...finishedGames];
+
+  if (all.length === 0) {
     console.log("\nNo games found.");
     return;
   }
 
-  console.log(`\n=== Games (${blobs.length}) ===\n`);
+  const active = all.filter((g) => g.status !== "finished");
+  const finished = all.filter((g) => g.status === "finished");
 
-  const games = await Promise.all(blobs.map((b) => fetchBlob(b.url)));
+  console.log(`\n=== Games ===`);
+  console.log(`  Active:   ${active.length}`);
+  console.log(`  Finished: ${finished.length}`);
+  console.log(`  Total:    ${all.length}\n`);
 
-  games.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  all.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-  for (const g of games) {
+  for (const g of all) {
     const statusIcon = g.status === "finished" ? "🏁" : g.status === "steve_turn" ? "🟡" : "🟢";
     const result = g.result ? ` (${g.result})` : "";
-    console.log(`  ${statusIcon} ${g.id}`);
+    const source = g.status === "finished" ? "blob" : "redis";
+    console.log(`  ${statusIcon} ${g.id} [${source}]`);
     console.log(`     player: @${g.player.githubLogin} | status: ${g.status}${result} | moves: ${g.moves.length}`);
     console.log(`     created: ${g.createdAt}`);
     console.log();
@@ -148,17 +183,44 @@ async function deleteGame(gameId) {
     return;
   }
 
+  let found = false;
+
+  // Try Redis first
+  if (process.env.REDIS_URL) {
+    const redis = createClient({ url: process.env.REDIS_URL });
+    redis.on("error", () => {});
+    await redis.connect();
+    try {
+      const data = await redis.get(`game:${gameId}`);
+      if (data) {
+        const game = JSON.parse(data);
+        await redis
+          .multi()
+          .del(`game:${gameId}`)
+          .sRem("steve-games", gameId)
+          .sRem(`player-games:${game.player.githubLogin}`, gameId)
+          .exec();
+        found = true;
+        console.log(`\nDeleted game ${gameId} from Redis.`);
+      }
+    } finally {
+      await redis.quit();
+    }
+  }
+
+  // Also check Blob
   const blobs = await listBlobs(`games/${gameId}.json`);
+  if (blobs.length > 0) {
+    for (const blob of blobs) {
+      await del(blob.url);
+    }
+    found = true;
+    console.log(`\nDeleted game ${gameId} from Blob.`);
+  }
 
-  if (blobs.length === 0) {
+  if (!found) {
     console.log(`\nGame ${gameId} not found.`);
-    return;
   }
-
-  for (const blob of blobs) {
-    await del(blob.url);
-  }
-  console.log(`\nDeleted game ${gameId}.`);
 }
 
 // ── Main ──
