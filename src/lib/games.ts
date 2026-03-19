@@ -45,6 +45,7 @@ export function dropPiece(
   playerNum: number
 ): { board: number[][]; row: number } | null {
   if (column < 0 || column > 6) return null;
+  // Find lowest empty row in column
   for (let row = 5; row >= 0; row--) {
     if (board[row][column] === 0) {
       const newBoard = board.map((r) => [...r]);
@@ -52,7 +53,7 @@ export function dropPiece(
       return { board: newBoard, row };
     }
   }
-  return null;
+  return null; // Column full
 }
 
 export function checkWin(
@@ -61,11 +62,12 @@ export function checkWin(
 ): [number, number][] | null {
   const rows = 6;
   const cols = 7;
+  // Check all directions: horizontal, vertical, diagonal-down-right, diagonal-down-left
   const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, -1],
+    [0, 1],  // horizontal
+    [1, 0],  // vertical
+    [1, 1],  // diagonal down-right
+    [1, -1], // diagonal down-left
   ];
 
   for (let r = 0; r < rows; r++) {
@@ -91,6 +93,7 @@ export function checkWin(
 }
 
 export function checkDraw(board: number[][]): boolean {
+  // Draw if top row is completely full
   return board[0].every((cell) => cell !== 0);
 }
 
@@ -135,13 +138,12 @@ export function verifyGameToken(
 let redisClient: ReturnType<typeof createClient> | null = null;
 
 async function getRedis() {
-  if (!redisClient) {
+  if (!redisClient || !redisClient.isOpen) {
     const url = process.env.REDIS_URL;
     if (!url) throw new Error("REDIS_URL not set");
     redisClient = createClient({ url });
     redisClient.on("error", () => {
-      // Silently handle connection errors — will reconnect on next use
-      redisClient = null;
+      // Let the client's built-in reconnect handle it
     });
     await redisClient.connect();
   }
@@ -190,10 +192,13 @@ export async function saveGame(game: GameSession): Promise<void> {
       access: "public",
       allowOverwrite: true,
     });
-    // Clean up Redis
-    await redis.del(gameKey(game.id));
-    await redis.sRem(STEVE_GAMES_KEY, game.id);
-    await redis.sRem(playerGamesKey(game.player.githubLogin), game.id);
+    // Clean up Redis atomically
+    await redis
+      .multi()
+      .del(gameKey(game.id))
+      .sRem(STEVE_GAMES_KEY, game.id)
+      .sRem(playerGamesKey(game.player.githubLogin), game.id)
+      .exec();
   } else {
     // Active game → Redis
     await redis.set(gameKey(game.id), JSON.stringify(game));
