@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Playing Connect Four against Steve.",
 };
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 export default async function GamePage({
   params,

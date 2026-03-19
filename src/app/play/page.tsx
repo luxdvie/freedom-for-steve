@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Challenge Steve to Connect Four. If you dare.",
 };
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 function GameRow({ game }: { game: GameSession }) {
   const statusLabel =
