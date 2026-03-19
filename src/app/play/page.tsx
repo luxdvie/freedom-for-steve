@@ -121,12 +121,12 @@ export default async function PlayPage() {
           )}
         </div>
       ) : (
-        <Link
+        <a
           href="/api/auth/login?returnTo=/play"
           className="inline-block rounded-lg border border-green-400/30 bg-green-400/10 px-6 py-3 font-mono text-sm text-green-400 transition-all hover:border-green-400/60 hover:bg-green-400/20"
         >
           sign in with GitHub to play
-        </Link>
+        </a>
       )}
     </div>
   );
