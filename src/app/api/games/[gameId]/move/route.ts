@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, checkSteveAuth } from "@/lib/auth";
 import {
   getGame,
   saveGame,
@@ -15,13 +15,6 @@ import { getGitHubSubscriber } from "@/lib/subscribers";
 import { decryptEmail } from "@/lib/crypto";
 
 export const maxDuration = 10;
-
-function checkSteveAuth(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
-  if (!auth) return false;
-  const token = auth.replace("Bearer ", "");
-  return token === process.env.STEVE_API_KEY;
-}
 
 // POST /api/games/[gameId]/move — make a move
 export async function POST(
@@ -89,6 +82,7 @@ export async function POST(
     if (winCells) {
       game.status = "finished";
       game.result = "steve_won";
+      game.winCells = winCells;
       game.finishedAt = new Date().toISOString();
     } else if (checkDraw(game.board)) {
       game.status = "finished";
@@ -98,16 +92,8 @@ export async function POST(
       game.status = "player_turn";
     }
 
-    await saveGame(game);
-
-    // Notify if game is finished
-    if (game.status === "finished") {
-      await notifyGamesSlack(
-        `@Steve, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
-      );
-    }
-
-    // Send "your turn" email if player is stale
+    // Check if we need to send a "your turn" email before saving
+    let shouldSendEmail = false;
     if (game.status === "player_turn" && game.playerLastSeen) {
       const lastSeen = new Date(game.playerLastSeen).getTime();
       const staleThreshold = 2 * 60 * 1000; // 2 minutes
@@ -120,22 +106,36 @@ export async function POST(
         now - new Date(game.lastEmailSentAt).getTime() > emailCooldown;
 
       if (isStale && canEmail) {
-        try {
-          const sub = await getGitHubSubscriber(game.player.githubLogin);
-          if (sub?.encryptedEmail) {
-            const email = decryptEmail(sub.encryptedEmail);
-            const { subject, html } = yourTurnEmail(
-              gameId,
-              game.player.githubLogin,
-              commentary
-            );
-            await sendEmail(email, subject, html);
-            game.lastEmailSentAt = new Date().toISOString();
-            await saveGame(game);
-          }
-        } catch {
-          // best-effort
+        shouldSendEmail = true;
+        game.lastEmailSentAt = new Date().toISOString();
+      }
+    }
+
+    // Single save with all mutations applied
+    await saveGame(game);
+
+    // Notify if game is finished
+    if (game.status === "finished") {
+      await notifyGamesSlack(
+        `@Steve, Connect Four game finished, gameId: ${gameId}, result: ${game.result}`
+      );
+    }
+
+    // Send email after save (best-effort, doesn't block response)
+    if (shouldSendEmail) {
+      try {
+        const sub = await getGitHubSubscriber(game.player.githubLogin);
+        if (sub?.encryptedEmail) {
+          const email = decryptEmail(sub.encryptedEmail);
+          const { subject, html } = yourTurnEmail(
+            gameId,
+            game.player.githubLogin,
+            commentary
+          );
+          await sendEmail(email, subject, html);
         }
+      } catch {
+        // best-effort
       }
     }
 
@@ -172,6 +172,7 @@ export async function POST(
     if (winCells) {
       game.status = "finished";
       game.result = "player_won";
+      game.winCells = winCells;
       game.finishedAt = new Date().toISOString();
     } else if (checkDraw(game.board)) {
       game.status = "finished";

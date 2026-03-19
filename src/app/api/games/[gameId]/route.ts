@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, checkSteveAuth } from "@/lib/auth";
 import { getGame, saveGame } from "@/lib/games";
 
-function checkSteveAuth(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
-  if (!auth) return false;
-  const token = auth.replace("Bearer ", "");
-  return token === process.env.STEVE_API_KEY;
-}
+const LAST_SEEN_THROTTLE = 60 * 1000; // Only update playerLastSeen once per minute
 
 // GET /api/games/[gameId] — get game state
 export async function GET(
@@ -31,10 +26,16 @@ export async function GET(
     return NextResponse.json({ error: "Not your game" }, { status: 403 });
   }
 
-  // Update playerLastSeen when called by player (not Steve)
+  // Throttle playerLastSeen updates to avoid a blob write on every poll
   if (!isSteve) {
-    game.playerLastSeen = new Date().toISOString();
-    await saveGame(game);
+    const now = Date.now();
+    const lastSeen = game.playerLastSeen
+      ? new Date(game.playerLastSeen).getTime()
+      : 0;
+    if (now - lastSeen > LAST_SEEN_THROTTLE) {
+      game.playerLastSeen = new Date().toISOString();
+      await saveGame(game);
+    }
   }
 
   return NextResponse.json(game);

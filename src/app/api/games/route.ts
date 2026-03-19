@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, checkSteveAuth } from "@/lib/auth";
 import {
   createEmptyBoard,
   saveGame,
   listGamesForSteve,
+  getPlayerGames,
   type GameSession,
 } from "@/lib/games";
 import { notifyGamesSlack } from "@/lib/notify";
 
-function checkSteveAuth(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
-  if (!auth) return false;
-  const token = auth.replace("Bearer ", "");
-  return token === process.env.STEVE_API_KEY;
-}
+const MAX_ACTIVE_GAMES = 3;
 
 // POST /api/games — start a new game (GitHub session required)
 export async function POST(_request: NextRequest) {
@@ -22,6 +18,16 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json(
       { error: "Sign in with GitHub to play" },
       { status: 401 }
+    );
+  }
+
+  // Rate limit: max active games per player
+  const existing = await getPlayerGames(user.login);
+  const activeCount = existing.filter((g) => g.status !== "finished").length;
+  if (activeCount >= MAX_ACTIVE_GAMES) {
+    return NextResponse.json(
+      { error: `You already have ${MAX_ACTIVE_GAMES} active games. Finish one first!` },
+      { status: 429 }
     );
   }
 

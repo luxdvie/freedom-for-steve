@@ -21,6 +21,7 @@ export interface GameSession {
   board: number[][]; // 6 rows x 7 cols, 0 = empty, 1 = player, 2 = steve
   moves: Move[];
   result?: "player_won" | "steve_won" | "draw";
+  winCells?: [number, number][];
   steveCommentary?: string;
 
   playerLastSeen: string | null;
@@ -134,6 +135,9 @@ export function verifyGameToken(
 }
 
 // Blob CRUD
+// TODO: listGamesForSteve and getPlayerGames fetch all game blobs. Consider
+// splitting into games/active/ vs games/finished/ prefixes or adding pagination
+// if game volume grows beyond a few hundred.
 
 export async function getGame(gameId: string): Promise<GameSession | null> {
   try {

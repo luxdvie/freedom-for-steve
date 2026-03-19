@@ -5,46 +5,6 @@ import Link from "next/link";
 import confetti from "canvas-confetti";
 import type { GameSession } from "@/lib/games";
 
-function checkWinClient(
-  board: number[][],
-  playerNum: number
-): [number, number][] | null {
-  const rows = 6;
-  const cols = 7;
-  const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, -1],
-  ];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (board[r][c] !== playerNum) continue;
-      for (const [dr, dc] of directions) {
-        const cells: [number, number][] = [];
-        let valid = true;
-        for (let i = 0; i < 4; i++) {
-          const nr = r + dr * i;
-          const nc = c + dc * i;
-          if (
-            nr < 0 ||
-            nr >= rows ||
-            nc < 0 ||
-            nc >= cols ||
-            board[nr][nc] !== playerNum
-          ) {
-            valid = false;
-            break;
-          }
-          cells.push([nr, nc]);
-        }
-        if (valid) return cells;
-      }
-    }
-  }
-  return null;
-}
-
 export default function GameBoard({
   initialGame,
 }: {
@@ -58,16 +18,10 @@ export default function GameBoard({
   const [confettiFired, setConfettiFired] = useState(false);
   const lastMoveCount = useRef(initialGame.moves.length);
 
-  // Find winning cells for highlighting
-  const winCells =
-    game.status === "finished" && game.result !== "draw"
-      ? checkWinClient(
-          game.board,
-          game.result === "player_won" ? 1 : 2
-        )
-      : null;
-
-  const winSet = new Set(winCells?.map(([r, c]) => `${r},${c}`) ?? []);
+  // Winning cells come from the API response
+  const winSet = new Set(
+    game.winCells?.map(([r, c]) => `${r},${c}`) ?? []
+  );
 
   // Polling for Steve's turn
   useEffect(() => {
