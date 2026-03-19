@@ -143,7 +143,7 @@ export async function getGame(gameId: string): Promise<GameSession | null> {
   try {
     const { blobs } = await list({ prefix: `games/${gameId}.json` });
     if (blobs.length === 0) return null;
-    const res = await fetch(blobs[0].url);
+    const res = await fetch(blobs[0].url, { cache: "no-store" });
     return res.json() as Promise<GameSession>;
   } catch {
     return null;
