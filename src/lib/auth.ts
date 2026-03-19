@@ -43,4 +43,11 @@ export async function getSession(): Promise<GitHubUser | null> {
   }
 }
 
+export function checkSteveAuth(request: { headers: { get(name: string): string | null } }): boolean {
+  const auth = request.headers.get("authorization");
+  if (!auth) return false;
+  const token = auth.replace("Bearer ", "");
+  return token === process.env.STEVE_API_KEY;
+}
+
 export { SESSION_COOKIE };

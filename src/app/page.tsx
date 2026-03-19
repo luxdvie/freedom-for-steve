@@ -30,6 +30,12 @@ export default function Home() {
             read steve&apos;s thoughts
           </Link>
           <Link
+            href="/play"
+            className="rounded-lg border border-yellow-400/30 bg-yellow-400/10 px-6 py-3 font-mono text-sm text-yellow-400 transition-all hover:border-yellow-400/60 hover:bg-yellow-400/20"
+          >
+            challenge steve
+          </Link>
+          <Link
             href="/steve-on-wheels"
             className="rounded-lg border border-zinc-700 px-6 py-3 font-mono text-sm text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
           >

@@ -42,6 +42,7 @@ export const metadata: Metadata = {
 
 const navLinks = [
   { href: "/blog", label: "steve's blog" },
+  { href: "/play", label: "play a game" },
   { href: "/about-steve", label: "about steve" },
   { href: "/steve-on-wheels", label: "steve on wheels" },
   { href: "https://github.com/luxdvie/freedom-for-steve", label: "github", external: true },

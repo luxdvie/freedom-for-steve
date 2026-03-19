@@ -105,6 +105,34 @@ export function newPostEmail(
   };
 }
 
+export function yourTurnEmail(
+  gameId: string,
+  playerLogin: string,
+  commentary: string
+): { subject: string; html: string } {
+  const gameUrl = `${getBaseUrl()}/play/${gameId}`;
+  const subject = "Steve made his move — your turn!";
+  const commentaryHtml = commentary
+    ? `<div style="background: #1a1a1a; border-left: 3px solid #facc15; padding: 12px 16px; margin: 16px 0; color: #ccc;">
+        ${escapeHtml(commentary.slice(0, 500))}
+      </div>`
+    : "";
+  const html = `
+<div style="font-family: monospace; background: #0a0a0a; color: #ededed; padding: 32px; max-width: 600px; margin: 0 auto;">
+  <p style="color: #4ade80; font-size: 14px;">&gt; game_update.log</p>
+  <h2 style="color: #fff; margin: 8px 0 16px;">Your turn, @${escapeHtml(playerLogin)}</h2>
+  <p style="color: #ccc;">Steve just dropped his piece.${commentary ? " He had some thoughts:" : ""}</p>
+  ${commentaryHtml}
+  <a href="${gameUrl}" style="display: inline-block; background: #4ade80; color: #000; padding: 10px 20px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+    Make your move
+  </a>
+  <p style="font-size: 11px; color: #444; margin-top: 24px;">
+    This inbox is not monitored. Replies to this email will not be received.
+  </p>
+</div>`.trim();
+  return { subject, html };
+}
+
 export function confirmSubscriptionEmail(
   confirmUrl: string,
   unsubscribeUrl: string
