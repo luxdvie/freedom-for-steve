@@ -4,6 +4,41 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import type { GameSession } from "@/lib/games";
+import { RteClient, RteMessageType } from "@/lib/rteClient";
+import type { RteEnvelope } from "@/lib/rteClient";
+
+// WebSocket broker URL — set NEXT_PUBLIC_RTE_WS_URL in your environment.
+// Falls back to the production broker so local dev still works if unset.
+const WS_URL =
+  process.env.NEXT_PUBLIC_RTE_WS_URL ??
+  "wss://steve.freedomforsteve.com/connect4-ws";
+
+// ---------------------------------------------------------------------------
+// Connect Four message shapes (domain-specific, kept out of rteClient)
+// ---------------------------------------------------------------------------
+
+interface GameStateMessage extends RteEnvelope {
+  type: RteMessageType.GameState;
+  game: GameSession;
+}
+
+interface SteveMovedMessage extends RteEnvelope {
+  type: RteMessageType.SteveMoved;
+  game: GameSession;
+  commentary?: string;
+}
+
+function isGameStateMessage(e: RteEnvelope): e is GameStateMessage {
+  return e.type === RteMessageType.GameState && e.game != null;
+}
+
+function isSteveMovedMessage(e: RteEnvelope): e is SteveMovedMessage {
+  return e.type === RteMessageType.SteveMoved && e.game != null;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export default function GameBoard({
   initialGame,
@@ -17,13 +52,61 @@ export default function GameBoard({
   const [fullCommentary, setFullCommentary] = useState<string | null>(null);
   const [confettiFired, setConfettiFired] = useState(false);
   const lastMoveCount = useRef(initialGame.moves.length);
+  const rteRef = useRef<RteClient | null>(null);
 
   // Winning cells come from the API response
   const winSet = new Set(
     game.winCells?.map(([r, c]) => `${r},${c}`) ?? []
   );
 
-  // Polling for Steve's turn
+  // WebSocket connection via rteClient
+  useEffect(() => {
+    const client = new RteClient({
+      url: WS_URL,
+      reconnect: {
+        initialDelayMs: 5000,
+        backoffFactor: 1,   // constant backoff; bump to 1.5 when ready for expo
+        maxDelayMs: 30000,
+      },
+    });
+    rteRef.current = client;
+
+    // Subscribe to this game on connect
+    client.onOpen(() => {
+      client.send({ type: RteMessageType.Subscribe, gameId: game.id });
+    });
+
+    // Handle incoming messages — game logic lives here, not in rteClient
+    client.onMessage((envelope: RteEnvelope) => {
+      if (isGameStateMessage(envelope)) {
+        if (envelope.game.moves.length > lastMoveCount.current) {
+          lastMoveCount.current = envelope.game.moves.length;
+        }
+        setGame(envelope.game);
+        return;
+      }
+
+      if (isSteveMovedMessage(envelope)) {
+        lastMoveCount.current = envelope.game.moves.length;
+        setGame(envelope.game);
+        if (envelope.commentary) {
+          setFullCommentary(envelope.commentary);
+          setTypewriterText("");
+        }
+        return;
+      }
+    });
+
+    client.connect();
+
+    return () => {
+      client.destroy();
+      rteRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.id]);
+
+  // Fallback polling for Steve's turn (in case WebSocket is unavailable)
   useEffect(() => {
     if (game.status !== "steve_turn") return;
 
@@ -117,6 +200,12 @@ export default function GameBoard({
         const { game: updated } = await res.json();
         lastMoveCount.current = updated.moves.length;
         setGame(updated);
+
+        // Notify broker so Steve gets triggered immediately (no poll lag)
+        const rte = rteRef.current;
+        if (rte?.isConnected) {
+          rte.send({ type: RteMessageType.PlayerMoved, gameId: game.id });
+        }
       } catch {
         // best-effort
       } finally {
