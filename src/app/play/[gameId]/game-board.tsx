@@ -83,6 +83,7 @@ export default function GameBoard({
           lastMoveCount.current = envelope.game.moves.length;
         }
         setGame(envelope.game);
+        setDropping(false);
         return;
       }
 
@@ -178,39 +179,21 @@ export default function GameBoard({
   }, [game.status, game.result, confettiFired]);
 
   const handleColumnClick = useCallback(
-    async (col: number) => {
+    (col: number) => {
       if (game.status !== "player_turn" || dropping) return;
       // Check if column is full
       if (game.board[0][col] !== 0) return;
+
+      const rte = rteRef.current;
+      if (!rte?.isConnected) return;
 
       setDropping(true);
       setFullCommentary(null);
       setTypewriterText("");
 
-      try {
-        const res = await fetch(`/api/games/${game.id}/move`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ column: col }),
-        });
-        if (!res.ok) {
-          setDropping(false);
-          return;
-        }
-        const { game: updated } = await res.json();
-        lastMoveCount.current = updated.moves.length;
-        setGame(updated);
-
-        // Notify broker so Steve gets triggered immediately (no poll lag)
-        const rte = rteRef.current;
-        if (rte?.isConnected) {
-          rte.send({ type: RteMessageType.PlayerMoved, gameId: game.id });
-        }
-      } catch {
-        // best-effort
-      } finally {
-        setDropping(false);
-      }
+      // Broker persists the move, updates game state, and forwards to Steve
+      rte.send({ type: RteMessageType.Move, gameId: game.id, column: col });
+      // dropping is cleared when the broker broadcasts game_state back
     },
     [game.status, game.id, game.board, dropping]
   );

@@ -21,7 +21,7 @@
 export enum RteMessageType {
   // Client → Broker
   Subscribe   = "subscribe",
-  PlayerMoved = "player_moved",
+  Move        = "move",
 
   // Broker → Client
   GameState   = "game_state",
