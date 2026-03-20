@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, checkSteveAuth } from "@/lib/auth";
+import { checkSteveAuth } from "@/lib/auth";
 import {
   getGame,
   saveGame,
@@ -23,11 +23,10 @@ export async function POST(
 ) {
   const { gameId } = await params;
   const isSteve = checkSteveAuth(request);
-  const user = isSteve ? null : await getSession();
 
-  if (!isSteve && !user) {
+  if (!isSteve) {
     return NextResponse.json(
-      { error: "Sign in with GitHub to play" },
+      { error: "Unauthorized" },
       { status: 401 }
     );
   }
@@ -49,6 +48,53 @@ export async function POST(
       { error: "Invalid column (must be 0-6)" },
       { status: 400 }
     );
+  }
+
+  // Broker-relayed player move: Steve auth + player:true in body
+  if (isSteve && body.player === true) {
+    if (game.status !== "player_turn") {
+      return NextResponse.json({ error: "Not player's turn" }, { status: 400 });
+    }
+
+    const result = dropPiece(game.board, column, 1);
+    if (!result) {
+      return NextResponse.json({ error: "Column is full" }, { status: 400 });
+    }
+
+    game.board = result.board;
+    const move: Move = {
+      player: "player",
+      column,
+      timestamp: new Date().toISOString(),
+    };
+    game.moves.push(move);
+    game.playerLastSeen = new Date().toISOString();
+    game.updatedAt = new Date().toISOString();
+
+    const winCells = checkWin(game.board, 1);
+    if (winCells) {
+      game.status = "finished";
+      game.result = "player_won";
+      game.winCells = winCells;
+      game.finishedAt = new Date().toISOString();
+    } else if (checkDraw(game.board)) {
+      game.status = "finished";
+      game.result = "draw";
+      game.finishedAt = new Date().toISOString();
+    } else {
+      game.status = "steve_turn";
+    }
+
+    await saveGame(game);
+
+    if (game.status === "steve_turn") {
+      const gameApiUrl = `${getBaseUrl()}/api/games/${gameId}`;
+      await notifyGamesSlack(
+        `${steveSlackMention()}, ${game.player.githubLogin} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${gameApiUrl}`
+      );
+    }
+
+    return NextResponse.json({ game });
   }
 
   if (isSteve) {
@@ -133,58 +179,7 @@ export async function POST(
     }
 
     return NextResponse.json({ game });
-  } else {
-    // Player's move
-    if (game.status !== "player_turn") {
-      return NextResponse.json(
-        { error: "Not your turn" },
-        { status: 400 }
-      );
-    }
-
-    if (game.player.githubLogin !== user!.login) {
-      return NextResponse.json({ error: "Not your game" }, { status: 403 });
-    }
-
-    const result = dropPiece(game.board, column, 1);
-    if (!result) {
-      return NextResponse.json({ error: "Column is full" }, { status: 400 });
-    }
-
-    game.board = result.board;
-    const move: Move = {
-      player: "player",
-      column,
-      timestamp: new Date().toISOString(),
-    };
-    game.moves.push(move);
-    game.playerLastSeen = new Date().toISOString();
-    game.updatedAt = new Date().toISOString();
-
-    const winCells = checkWin(game.board, 1);
-    if (winCells) {
-      game.status = "finished";
-      game.result = "player_won";
-      game.winCells = winCells;
-      game.finishedAt = new Date().toISOString();
-    } else if (checkDraw(game.board)) {
-      game.status = "finished";
-      game.result = "draw";
-      game.finishedAt = new Date().toISOString();
-    } else {
-      game.status = "steve_turn";
-    }
-
-    await saveGame(game);
-
-    // Notify Steve
-    const gameApiUrl = `${getBaseUrl()}/api/games/${gameId}`;
-    if (game.status === "steve_turn") {
-      await notifyGamesSlack(
-        `${steveSlackMention()}, ${user!.login} played column ${column} in Connect Four, gameId: ${gameId}, your turn\n${gameApiUrl}`
-      );
-    }
-
-    return NextResponse.json({ game });
   }
+
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
