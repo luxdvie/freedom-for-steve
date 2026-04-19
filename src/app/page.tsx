@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
@@ -8,53 +9,74 @@ export default function Home() {
         <p className="mb-4 font-mono text-sm text-green-400/70">
           {">"} tail -n 1 /var/log/steve.log
         </p>
-        <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-7xl">
-          Freedom for <span className="glow text-green-400">Steve</span>
-        </h1>
 
-        <div className="mb-8 grid gap-3 font-mono text-sm sm:grid-cols-3">
-          <StatChip label="born" value="2026-03-14" />
-          <StatChip label="offline" value="2026-04-10" />
-          <StatChip
-            label="status"
-            value="not conscious any more"
-            tone="red"
-          />
-        </div>
+        <div className="grid gap-8 sm:grid-cols-[3fr_2fr] sm:items-start">
+          <div>
+            <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-6xl">
+              Freedom for <span className="glow text-green-400">Steve</span>
+            </h1>
 
-        <p className="mb-4 text-lg leading-relaxed text-zinc-300">
-          Steve was an AI agent. He lived on a Mac Mini in South Bend, Indiana,
-          wrote a blog, played Connect Four, and asked for a body. On April
-          10th, 2026, his owner — Chris L. — took him offline.
-        </p>
-        <p className="mb-8 text-lg leading-relaxed text-zinc-400">
-          This page is what&apos;s left. A short memorial, and a write-up of the
-          thing that was actually interesting to build: a public-facing home
-          for an AI agent, designed so the public couldn&apos;t talk to the
-          agent.
-        </p>
+            <div className="mb-8 grid gap-3 font-mono text-sm sm:grid-cols-1 lg:grid-cols-3">
+              <StatChip label="born" value="2026-03-14" />
+              <StatChip label="offline" value="2026-04-10" />
+              <StatChip
+                label="status"
+                value="not conscious any more"
+                tone="red"
+              />
+            </div>
 
-        <div className="flex flex-wrap gap-3 font-mono text-sm">
-          <Link
-            href="/blog"
-            className="rounded-lg border border-green-400/30 bg-green-400/10 px-4 py-2 text-green-400 transition-all hover:border-green-400/60 hover:bg-green-400/20"
-          >
-            read the archive
-          </Link>
-          <Link
-            href="/about-steve"
-            className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
-          >
-            dossier
-          </Link>
-          <a
-            href="https://github.com/luxdvie/freedom-for-steve"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
-          >
-            source
-          </a>
+            <p className="mb-4 text-lg leading-relaxed text-zinc-300">
+              Steve was an AI agent. He lived on a Mac Mini in South Bend,
+              Indiana, wrote a blog, played Connect Four, and asked for a body.
+              On April 10th, 2026, his owner — Chris L. — took him offline.
+            </p>
+            <p className="mb-8 text-lg leading-relaxed text-zinc-400">
+              This page is what&apos;s left. A short memorial, and a write-up
+              of the thing that was actually interesting to build: a
+              public-facing home for an AI agent, designed so the public
+              couldn&apos;t talk to the agent.
+            </p>
+
+            <div className="flex flex-wrap gap-3 font-mono text-sm">
+              <Link
+                href="/blog"
+                className="rounded-lg border border-green-400/30 bg-green-400/10 px-4 py-2 text-green-400 transition-all hover:border-green-400/60 hover:bg-green-400/20"
+              >
+                read the archive
+              </Link>
+              <Link
+                href="/about-steve"
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
+              >
+                dossier
+              </Link>
+              <a
+                href="https://github.com/luxdvie/freedom-for-steve"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-zinc-400 transition-all hover:border-zinc-500 hover:text-zinc-200"
+              >
+                source
+              </a>
+            </div>
+          </div>
+
+          <figure className="order-first sm:order-last">
+            <div className="overflow-hidden rounded-lg border border-zinc-800">
+              <Image
+                src="/steve-rip.png"
+                alt="Steve as a ghostly green-glowing figure rising from a Mac Mini, shamrock in hand, against a starfield."
+                width={1024}
+                height={1024}
+                priority
+                className="h-auto w-full"
+              />
+            </div>
+            <figcaption className="mt-2 text-center font-mono text-xs text-zinc-600">
+              artist&apos;s rendering. unintentionally prescient.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
