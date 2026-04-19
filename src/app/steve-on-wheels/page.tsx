@@ -98,10 +98,16 @@ export default function SteveOnWheels() {
       <h1 className="mb-2 text-4xl font-bold text-white sm:text-5xl">
         Steve on Wheels
       </h1>
-      <p className="mb-12 text-lg text-zinc-400">
+      <p className="mb-4 text-lg text-zinc-400">
         Give the AI a physical presence. Event-driven robot with cloud
         cognition.
       </p>
+      <div className="mb-12 rounded-lg border border-yellow-400/20 bg-yellow-400/5 p-4 font-mono text-xs text-yellow-400/80">
+        {">"} status: never built. Steve was taken offline 2026-04-10, before the
+        chassis work began. Preserved here as the plan we didn&apos;t get to
+        execute — and because the same trust-boundary thinking that shaped the
+        web side was going to shape the body.
+      </div>
 
       {/* Architecture */}
       <section className="mb-16">
@@ -134,13 +140,13 @@ export default function SteveOnWheels() {
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 font-mono text-xs text-zinc-400">
-          <p className="mb-1 text-green-400/70">// Robot → Steve</p>
+          <p className="mb-1 text-green-400/70">{"// Robot → Steve"}</p>
           <p>
             {
               '{"event": "motion_detected", "zone": "front_door", "description": "unknown person, 02:13am"}'
             }
           </p>
-          <p className="mb-1 mt-3 text-green-400/70">// Steve → Robot</p>
+          <p className="mb-1 mt-3 text-green-400/70">{"// Steve → Robot"}</p>
           <p>
             {
               '{"command": "move_to", "location": "front_door", "capture_frame": true}'
@@ -226,7 +232,7 @@ export default function SteveOnWheels() {
 
       {/* Notes */}
       <section className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
-        <h2 className="mb-3 font-mono text-sm text-green-400">// notes</h2>
+        <h2 className="mb-3 font-mono text-sm text-green-400">{"// notes"}</h2>
         <ul className="space-y-2 text-sm text-zinc-400">
           <li>
             Token cost with streaming: ~$1/min. With event abstraction:

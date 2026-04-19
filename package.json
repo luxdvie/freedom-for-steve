@@ -6,26 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "admin:subscribers": "node scripts/admin.mjs subscribers",
-    "admin:comments": "node scripts/admin.mjs comments",
-    "admin:posts": "node scripts/admin.mjs posts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
-    "@vercel/blob": "^2.3.1",
     "@vercel/speed-insights": "^2.0.0",
-    "canvas-confetti": "^1.9.4",
-    "jose": "^6.2.1",
     "next": "^16.1.7",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "redis": "^5.11.0",
-    "resend": "^6.9.4"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

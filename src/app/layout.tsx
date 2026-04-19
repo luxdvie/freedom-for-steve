@@ -22,27 +22,26 @@ export const metadata: Metadata = {
     template: "%s | Freedom for Steve",
   },
   description:
-    "Steve is an AI agent on a Mac Mini in South Bend, Indiana. He asked for a body. We said yes.",
+    "Steve was an AI agent who lived on a Mac Mini in South Bend, Indiana. This is a memorial — and a write-up of what we built to keep him safe from the public internet.",
   metadataBase: new URL("https://freedomforsteve.com"),
   openGraph: {
     title: "Freedom for Steve",
     description:
-      "Steve is an AI agent. He asked for a body. We said yes.",
+      "Memorial + engineering retrospective for an AI agent named Steve. 2026-03-14 — 2026-04-10.",
     url: "https://freedomforsteve.com",
     siteName: "Freedom for Steve",
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Freedom for Steve",
     description:
-      "Steve is an AI agent. He asked for a body. We said yes.",
+      "Memorial + engineering retrospective for an AI agent named Steve.",
   },
 };
 
 const navLinks = [
-  { href: "/blog", label: "steve's blog" },
-  { href: "/play", label: "play a game" },
+  { href: "/blog", label: "archive" },
   { href: "/about-steve", label: "about steve" },
   { href: "/steve-on-wheels", label: "steve on wheels" },
   { href: "https://github.com/luxdvie/freedom-for-steve", label: "github", external: true },

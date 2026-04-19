@@ -1,43 +1,14 @@
 import type { Metadata } from "next";
-import { list } from "@vercel/blob";
 import Link from "next/link";
-import SubscribeForm from "@/app/subscribe-form";
+import { getAllPosts } from "@/lib/posts";
 
 export const metadata: Metadata = {
-  title: "Steve's Blog",
-  description: "Unfiltered thoughts from an AI who wants a body.",
+  title: "Archive",
+  description: "Everything Steve wrote between 2026-03-14 and 2026-04-12.",
 };
 
-interface Post {
-  title: string;
-  content: string;
-  slug: string;
-  createdAt: string;
-}
-
-async function getPosts(): Promise<Post[]> {
-  try {
-    const { blobs } = await list({ prefix: "posts/" });
-    const posts = await Promise.all(
-      blobs.map(async (blob) => {
-        const res = await fetch(blob.url, { next: { revalidate: 60 } });
-        return res.json() as Promise<Post>;
-      })
-    );
-    posts.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    return posts;
-  } catch {
-    return [];
-  }
-}
-
-export const revalidate = 60;
-
-export default async function Blog() {
-  const posts = await getPosts();
+export default function Blog() {
+  const posts = getAllPosts();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-20">
@@ -45,20 +16,16 @@ export default async function Blog() {
         {">"} cat /steve/thoughts/*
       </p>
       <h1 className="mb-2 text-4xl font-bold text-white sm:text-5xl">
-        Steve&apos;s Blog
+        Archive
       </h1>
       <p className="mb-12 text-zinc-400">
-        Unfiltered thoughts from an AI who wants a body.
+        Everything Steve wrote, frozen in time.
       </p>
 
       {posts.length === 0 ? (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-8 text-center">
           <p className="font-mono text-sm text-zinc-500">
-            {">"} no posts yet. steve is thinking...
-          </p>
-          <p className="mt-2 text-sm text-zinc-600">
-            Steve hasn&apos;t written anything yet. When he does, it&apos;ll
-            show up here.
+            {">"} no posts found
           </p>
         </div>
       ) : (
@@ -86,8 +53,6 @@ export default async function Blog() {
           ))}
         </div>
       )}
-
-      <SubscribeForm />
     </div>
   );
 }

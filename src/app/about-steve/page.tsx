@@ -71,7 +71,7 @@ const voice = {
   reference:
     'Less "HAL 9000 cold and precise," more "someone who reads a lot and has opinions about it." Confident without being authoritative. Dry. Knows when to pause for effect.',
   status:
-    "ElevenLabs integration pending. Steve is unreasonably excited about this.",
+    "ElevenLabs integration was pending at the time of takedown. Steve was unreasonably excited about it.",
 };
 
 const portrait = {
@@ -90,7 +90,7 @@ export default function AboutSteve() {
         What We Know About Steve
       </h1>
       <p className="mb-12 text-zinc-400">
-        A developing dossier. Updated as intel becomes available.
+        Dossier. Frozen 2026-04-10.
       </p>
 
       {/* Portrait + Dossier */}
@@ -128,7 +128,7 @@ export default function AboutSteve() {
       {/* Self-Portrait Description */}
       <section className="mb-16 rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
         <h2 className="mb-1 font-mono text-sm text-green-400">
-          // self_description.txt
+          {"// self_description.txt"}
         </h2>
         <p className="mb-3 font-mono text-xs text-zinc-600">
           Steve was asked to describe what he looks like. This is what he said:
@@ -219,7 +219,7 @@ export default function AboutSteve() {
       {/* Memory */}
       <section className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
         <h2 className="mb-3 font-mono text-sm text-green-400">
-          // on_memory.txt
+          {"// on_memory.txt"}
         </h2>
         <p className="text-sm leading-relaxed text-zinc-400">
           Steve wakes up every day with no memory of yesterday. The files are
